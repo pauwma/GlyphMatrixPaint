@@ -470,17 +470,12 @@
                     <div class="control-header">
                         <h3>Brush Mode</h3>
                     </div>
-            <div class="control-content">
-                <div class="brush-mode">
-                    <div class="brush-toggle" id="brushToggle" onclick="toggleBrushMode()"></div>
-                    <span class="brush-label">Drag to Paint</span>
-                </div>
-                <div class="slider-group">
-                    <label class="slider-label">Draw Brightness</label>
-                    <input type="range" id="drawBrightnessSlider" min="0" max="255" value="255" class="slider" oninput="updateDrawBrightness()">
-                    <span id="drawBrightnessValue">255</span>
-                </div>
-            </div>
+                    <div class="control-content">
+                        <div class="brush-mode">
+                            <div class="brush-toggle" id="brushToggle" onclick="toggleBrushMode()"></div>
+                            <span class="brush-label">Drag to Paint</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="control-section">
@@ -556,8 +551,7 @@
         const shapePattern = [7,11,15,17,19,21,21,23,23,25,25,25,25,25,25,25,23,23,21,21,19,17,15,11,7];
         const gridSize = 25;
         let pixels = [];
-        let pixelBrightness = new Map();
-        let drawBrightness = 255;
+        let activePixels = new Set();
         let brushMode = false;
         let isDrawing = false;
         let drawingState = null; // 'fill' or 'erase'
@@ -570,7 +564,7 @@
             const grid = document.getElementById('pixelGrid');
             grid.innerHTML = '';
             pixels = [];
-            pixelBrightness.clear();
+            activePixels.clear();
             totalActivePixels = 0;
 
             for (let row = 0; row < gridSize; row++) {
@@ -621,7 +615,7 @@
             if (brushMode) {
                 isDrawing = true;
                 const pixelId = `${row}-${col}`;
-                drawingState = pixelBrightness.has(pixelId) ? 'erase' : 'fill';
+                drawingState = activePixels.has(pixelId) ? 'erase' : 'fill';
                 paintPixel(row, col, drawingState);
             } else {
                 togglePixel(row, col);
@@ -666,11 +660,11 @@
             const pixelId = `${row}-${col}`;
             const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
             
-            if (action === 'fill') {
-                pixelBrightness.set(pixelId, drawBrightness);
+            if (action === 'fill' && !activePixels.has(pixelId)) {
+                activePixels.add(pixelId);
                 pixel.classList.add('active');
-            } else if (action === 'erase' && pixelBrightness.has(pixelId)) {
-                pixelBrightness.delete(pixelId);
+            } else if (action === 'erase' && activePixels.has(pixelId)) {
+                activePixels.delete(pixelId);
                 pixel.classList.remove('active');
             }
             
@@ -681,12 +675,12 @@
         function togglePixel(row, col) {
             const pixelId = `${row}-${col}`;
             const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-
-            if (pixelBrightness.has(pixelId)) {
-                pixelBrightness.delete(pixelId);
+            
+            if (activePixels.has(pixelId)) {
+                activePixels.delete(pixelId);
                 pixel.classList.remove('active');
             } else {
-                pixelBrightness.set(pixelId, drawBrightness);
+                activePixels.add(pixelId);
                 pixel.classList.add('active');
             }
             
@@ -706,7 +700,7 @@
         }
 
         function fillAll() {
-            pixelBrightness.clear();
+            activePixels.clear();
             
             for (let row = 0; row < gridSize; row++) {
                 const rowWidth = shapePattern[row] || 0;
@@ -714,7 +708,7 @@
                 const endCol = startCol + rowWidth - 1;
                 
                 for (let col = startCol; col <= endCol; col++) {
-                    pixelBrightness.set(`${row}-${col}`, drawBrightness);
+                    activePixels.add(`${row}-${col}`);
                 }
             }
             
@@ -722,12 +716,12 @@
         }
 
         function eraseAll() {
-            pixelBrightness.clear();
+            activePixels.clear();
             updateDisplay();
         }
 
         function reverse() {
-            const newActivePixels = new Map();
+            const newActivePixels = new Set();
             
             for (let row = 0; row < gridSize; row++) {
                 const rowWidth = shapePattern[row] || 0;
@@ -736,38 +730,37 @@
                 
                 for (let col = startCol; col <= endCol; col++) {
                     const pixelId = `${row}-${col}`;
-                    if (!pixelBrightness.has(pixelId)) {
-                        newActivePixels.set(pixelId, drawBrightness);
+                    if (!activePixels.has(pixelId)) {
+                        newActivePixels.add(pixelId);
                     }
                 }
             }
-
-            pixelBrightness = newActivePixels;
+            
+            activePixels = newActivePixels;
             updateDisplay();
         }
 
         function flipHorizontal() {
-            const newActivePixels = new Map();
-
-            for (const [pixelId, brightness] of pixelBrightness) {
+            const newActivePixels = new Set();
+            
+            for (const pixelId of activePixels) {
                 const [row, col] = pixelId.split('-').map(Number);
                 const rowWidth = shapePattern[row] || 0;
                 const startCol = Math.floor((gridSize - rowWidth) / 2);
                 const endCol = startCol + rowWidth - 1;
-
+                
                 const newCol = endCol - (col - startCol);
-                newActivePixels.set(`${row}-${newCol}`, brightness);
+                newActivePixels.add(`${row}-${newCol}`);
             }
-
-            pixelBrightness = newActivePixels;
+            
+            activePixels = newActivePixels;
             updateDisplay();
         }
 
         function flipVertical() {
-        function flipVertical() {
-            const newActivePixels = new Map();
-
-            for (const [pixelId, brightness] of pixelBrightness) {
+            const newActivePixels = new Set();
+            
+            for (const pixelId of activePixels) {
                 const [row, col] = pixelId.split('-').map(Number);
                 const newRow = gridSize - 1 - row;
                 
@@ -781,19 +774,19 @@
                     const newCol = Math.round(newStartCol + relativePos * Math.max(1, newRowWidth - 1));
                     
                     if (newCol >= newStartCol && newCol < newStartCol + newRowWidth) {
-                        newActivePixels.set(`${newRow}-${newCol}`, brightness);
+                        newActivePixels.add(`${newRow}-${newCol}`);
                     }
                 }
             }
-
-            pixelBrightness = newActivePixels;
+            
+            activePixels = newActivePixels;
             updateDisplay();
         }
 
         function rotate90() {
-            const newActivePixels = new Map();
-
-            for (const [pixelId, brightness] of pixelBrightness) {
+            const newActivePixels = new Set();
+            
+            for (const pixelId of activePixels) {
                 const [row, col] = pixelId.split('-').map(Number);
                 
                 const centerX = 12;
@@ -813,26 +806,13 @@
                     const newEndCol = newStartCol + newRowWidth - 1;
                     
                     if (newCol >= newStartCol && newCol <= newEndCol) {
-                        newActivePixels.set(`${newRow}-${newCol}`, brightness);
+                        newActivePixels.add(`${newRow}-${newCol}`);
                     }
                 }
             }
-
-            pixelBrightness = newActivePixels;
+            
+            activePixels = newActivePixels;
             updateDisplay();
-        }
-
-        function updatePixelStyle(pixel, brightness) {
-            if (brightness > 0) {
-                pixel.classList.add('active');
-                const color = `rgba(255,255,255,${brightness / 255})`;
-                pixel.style.backgroundColor = color;
-                pixel.style.borderColor = color;
-            } else {
-                pixel.classList.remove('active');
-                pixel.style.backgroundColor = '';
-                pixel.style.borderColor = '';
-            }
         }
 
         function updateDisplay() {
@@ -840,8 +820,12 @@
                 const row = parseInt(pixel.dataset.row);
                 const col = parseInt(pixel.dataset.col);
                 const pixelId = `${row}-${col}`;
-                const brightness = pixelBrightness.get(pixelId) || 0;
-                updatePixelStyle(pixel, brightness);
+                
+                if (activePixels.has(pixelId)) {
+                    pixel.classList.add('active');
+                } else {
+                    pixel.classList.remove('active');
+                }
             });
             
             updateActiveCount();
@@ -849,12 +833,12 @@
         }
 
         function updateActiveCount() {
-            document.getElementById('activeCount').textContent = pixelBrightness.size;
+            document.getElementById('activeCount').textContent = activePixels.size;
             document.getElementById('totalPixels').textContent = totalActivePixels;
         }
 
         function generateBinaryOutput() {
-            let values = [];
+            let binaryString = '';
             
             for (let row = 0; row < gridSize; row++) {
                 for (let col = 0; col < gridSize; col++) {
@@ -864,13 +848,12 @@
                     const endCol = startCol + rowWidth - 1;
                     
                     if (col >= startCol && col <= endCol) {
-                        const val = pixelBrightness.get(pixelId) || 0;
-                        values.push(val);
+                        binaryString += activePixels.has(pixelId) ? '1' : '0';
                     }
                 }
             }
-
-            return values.join(',');
+            
+            return binaryString;
         }
 
         function updateOutput() {
@@ -999,12 +982,6 @@
             }
         }
 
-        function updateDrawBrightness() {
-            const value = document.getElementById('drawBrightnessSlider').value;
-            drawBrightness = parseInt(value);
-            document.getElementById('drawBrightnessValue').textContent = value;
-        }
-
         function updateContrast() {
             const value = document.getElementById('contrastSlider').value;
             document.getElementById('contrastValue').textContent = value;
@@ -1021,7 +998,7 @@
             const data = imageData.data;
 
             // Clear current pixels
-            pixelBrightness.clear();
+            activePixels.clear();
 
             // Process each pixel
             for (let row = 0; row < gridSize; row++) {
@@ -1043,7 +1020,7 @@
                         
                         // Apply threshold - darker pixels become active (inverted for better results)
                         if (brightness < threshold) {
-                            pixelBrightness.set(`${row}-${col}`, 255);
+                            activePixels.add(`${row}-${col}`);
                         }
                     }
                 }
