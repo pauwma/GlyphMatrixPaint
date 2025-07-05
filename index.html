@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glyph Matrix Editor</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #333;
+            width: 100%;
+            max-width: 800px;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            color: #999;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 60px;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .grid-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grid-container {
+            border: 1px solid #333;
+            padding: 20px;
+            background: #000;
+            position: relative;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(25, 1fr);
+            gap: 1px;
+            background: #111;
+            padding: 1px;
+        }
+
+        .pixel {
+            width: 18px;
+            height: 18px;
+            background: #000;
+            border: 1px solid #222;
+            cursor: crosshair;
+            transition: all 0.1s ease;
+            position: relative;
+        }
+
+        .pixel.active {
+            background: #fff;
+            border-color: #fff;
+        }
+
+        .pixel.inactive {
+            background: #000;
+            border-color: #000;
+            cursor: default;
+            opacity: 0.1;
+        }
+
+        .pixel:not(.inactive):hover {
+            border-color: #666;
+        }
+
+        .grid-info {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            min-width: 240px;
+        }
+
+        .control-section {
+            border: 1px solid #333;
+            background: #000;
+            transition: all 0.2s ease;
+        }
+
+        /* Collapsible behaviour */
+        .control-section.collapsed .control-content {
+            display: none;
+        }
+
+        .control-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            background: #111;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .control-header h3 {
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #999;
+        }
+
+        /* Arrow indicator */
+        .control-header::after {
+            content: '▼';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            color: #999;
+            transition: transform 0.2s ease;
+        }
+
+        .control-section.collapsed .control-header::after {
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        .control-content {
+            padding: 20px;
+        }
+
+        .btn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid #333;
+            padding: 12px 20px;
+            font-size: 0.8rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            width: 100%;
+            margin-bottom: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:last-child {
+            margin-bottom: 0;
+        }
+
+        .btn:hover {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn.danger:hover {
+            background: #000;
+            color: #fff;
+            border-color: #fff;
+        }
+
+        .btn.primary:hover {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+        }
+
+        .output-section {
+            background: #111;
+            border: 1px solid #333;
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            line-height: 1.4;
+            max-height: 200px;
+            overflow-y: auto;
+            word-break: break-all;
+            padding: 15px;
+            color: #999;
+        }
+
+        .copy-feedback {
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+            color: #fff;
+        }
+
+        .brush-mode {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .brush-toggle {
+            width: 40px;
+            height: 20px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .brush-toggle.active {
+            background: #fff;
+            border-color: #fff;
+        }
+
+        .brush-toggle::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #000;
+            border-radius: 50%;
+            top: 1px;
+            left: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .brush-toggle.active::after {
+            transform: translateX(18px);
+            background: #000;
+        }
+
+        .brush-label {
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .coordinates {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            font-size: 0.7rem;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+
+        .grid-container::before {
+            content: '(0,0)';
+            position: absolute;
+            top: -25px;
+            left: 20px;
+            font-size: 0.7rem;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+
+        .grid-container::after {
+            content: '(24,24)';
+            position: absolute;
+            bottom: -25px;
+            right: 20px;
+            font-size: 0.7rem;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+                align-items: center;
+                gap: 40px;
+            }
+
+            .pixel {
+                width: 14px;
+                height: 14px;
+            }
+
+            .controls {
+                min-width: 100%;
+                max-width: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .pixel {
+                width: 12px;
+                height: 12px;
+            }
+
+            .main-content {
+                gap: 30px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Image upload styles */
+        .import-controls {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .slider-label {
+            font-size: 0.7rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 60px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 2px;
+            background: #333;
+            border-radius: 1px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s ease;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-group span {
+            font-size: 0.7rem;
+            color: #666;
+            min-width: 30px;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .preview-canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Glyph Matrix</h1>
+            <p>Pixel Art Editor</p>
+        </div>
+
+        <div class="main-content">
+            <div class="grid-section">
+                <div class="grid-container">
+                    <div class="grid" id="pixelGrid"></div>
+                </div>
+                <div class="grid-info">
+                    <span id="activeCount">0</span> / <span id="totalPixels">0</span> pixels active
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-section">
+                    <div class="control-header">
+                        <h3>Brush Mode</h3>
+                    </div>
+                    <div class="control-content">
+                        <div class="brush-mode">
+                            <div class="brush-toggle" id="brushToggle" onclick="toggleBrushMode()"></div>
+                            <span class="brush-label">Drag to Paint</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <div class="control-header">
+                        <h3>Import</h3>
+                    </div>
+                    <div class="control-content">
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                        <button class="btn primary" onclick="document.getElementById('imageUpload').click()">Upload Image</button>
+                        <div class="import-controls" id="importControls" style="display: none;">
+                            <div class="slider-group">
+                                <label class="slider-label">Threshold</label>
+                                <input type="range" id="thresholdSlider" min="0" max="255" value="128" class="slider" oninput="updateThreshold()">
+                                <span id="thresholdValue">128</span>
+                            </div>
+                            <div class="slider-group">
+                                <label class="slider-label">Brightness</label>
+                                <input type="range" id="brightnessSlider" min="-100" max="100" value="0" class="slider" oninput="updateBrightness()">
+                                <span id="brightnessValue">0</span>
+                            </div>
+                            <div class="slider-group">
+                                <label class="slider-label">Contrast</label>
+                                <input type="range" id="contrastSlider" min="0" max="200" value="100" class="slider" oninput="updateContrast()">
+                                <span id="contrastValue">100</span>
+                            </div>
+                            <button class="btn" onclick="applyImageToPixels()">Apply to Grid</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <div class="control-header">
+                        <h3>Actions</h3>
+                    </div>
+                    <div class="control-content">
+                        <button class="btn primary" onclick="fillAll()">Fill All</button>
+                        <button class="btn danger" onclick="eraseAll()">Clear All</button>
+                        <button class="btn" onclick="reverse()">Invert</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <div class="control-header">
+                        <h3>Transform</h3>
+                    </div>
+                    <div class="control-content">
+                        <button class="btn" onclick="flipHorizontal()">Flip Horizontal</button>
+                        <button class="btn" onclick="flipVertical()">Flip Vertical</button>
+                        <button class="btn" onclick="rotate90()">Rotate 90°</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <div class="control-header">
+                        <h3>Export</h3>
+                    </div>
+                    <div class="control-content">
+                        <div class="output-section" id="binaryOutput">
+                            Binary data will appear here...
+                        </div>
+                    </div>
+                    <div class="control-content">
+                        <button class="btn primary" onclick="copyToClipboard()">Copy Binary</button>
+                        <div class="copy-feedback" id="copyFeedback">Copied to clipboard</div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const shapePattern = [7,11,15,17,19,21,21,23,23,25,25,25,25,25,25,25,23,23,21,21,19,17,15,11,7];
+        const gridSize = 25;
+        let pixels = [];
+        let activePixels = new Set();
+        let brushMode = false;
+        let isDrawing = false;
+        let drawingState = null; // 'fill' or 'erase'
+        let totalActivePixels = 0;
+        let uploadedImage = null;
+        let imageCanvas = null;
+        let imageContext = null;
+
+        function initializeGrid() {
+            const grid = document.getElementById('pixelGrid');
+            grid.innerHTML = '';
+            pixels = [];
+            activePixels.clear();
+            totalActivePixels = 0;
+
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    const pixel = document.createElement('div');
+                    pixel.className = 'pixel';
+                    pixel.dataset.row = row;
+                    pixel.dataset.col = col;
+                    
+                    const rowWidth = shapePattern[row] || 0;
+                    const startCol = Math.floor((gridSize - rowWidth) / 2);
+                    const endCol = startCol + rowWidth - 1;
+                    
+                    if (col >= startCol && col <= endCol) {
+                        totalActivePixels++;
+                        
+                        // Mouse events for drawing
+                        pixel.addEventListener('mousedown', (e) => handleMouseDown(e, row, col));
+                        pixel.addEventListener('mouseenter', (e) => handleMouseEnter(e, row, col));
+                        pixel.addEventListener('mouseup', () => handleMouseUp());
+                        
+                        // Touch events for mobile
+                        pixel.addEventListener('touchstart', (e) => handleTouchStart(e, row, col));
+                        pixel.addEventListener('touchmove', (e) => handleTouchMove(e));
+                        pixel.addEventListener('touchend', () => handleTouchEnd());
+                        
+                        // Prevent context menu
+                        pixel.addEventListener('contextmenu', (e) => e.preventDefault());
+                    } else {
+                        pixel.classList.add('inactive');
+                    }
+                    
+                    grid.appendChild(pixel);
+                    pixels.push(pixel);
+                }
+            }
+            
+            // Global mouse events
+            document.addEventListener('mouseup', handleMouseUp);
+            document.addEventListener('mouseleave', handleMouseUp);
+            
+            updateDisplay();
+        }
+
+        function handleMouseDown(e, row, col) {
+            e.preventDefault();
+            
+            if (brushMode) {
+                isDrawing = true;
+                const pixelId = `${row}-${col}`;
+                drawingState = activePixels.has(pixelId) ? 'erase' : 'fill';
+                paintPixel(row, col, drawingState);
+            } else {
+                togglePixel(row, col);
+            }
+        }
+
+        function handleMouseEnter(e, row, col) {
+            if (brushMode && isDrawing) {
+                paintPixel(row, col, drawingState);
+            }
+        }
+
+        function handleMouseUp() {
+            isDrawing = false;
+            drawingState = null;
+        }
+
+        function handleTouchStart(e, row, col) {
+            e.preventDefault();
+            handleMouseDown(e, row, col);
+        }
+
+        function handleTouchMove(e) {
+            if (!isDrawing) return;
+            
+            e.preventDefault();
+            const touch = e.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (element && element.classList.contains('pixel') && !element.classList.contains('inactive')) {
+                const row = parseInt(element.dataset.row);
+                const col = parseInt(element.dataset.col);
+                paintPixel(row, col, drawingState);
+            }
+        }
+
+        function handleTouchEnd() {
+            handleMouseUp();
+        }
+
+        function paintPixel(row, col, action) {
+            const pixelId = `${row}-${col}`;
+            const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            
+            if (action === 'fill' && !activePixels.has(pixelId)) {
+                activePixels.add(pixelId);
+                pixel.classList.add('active');
+            } else if (action === 'erase' && activePixels.has(pixelId)) {
+                activePixels.delete(pixelId);
+                pixel.classList.remove('active');
+            }
+            
+            updateActiveCount();
+            updateOutput();
+        }
+
+        function togglePixel(row, col) {
+            const pixelId = `${row}-${col}`;
+            const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            
+            if (activePixels.has(pixelId)) {
+                activePixels.delete(pixelId);
+                pixel.classList.remove('active');
+            } else {
+                activePixels.add(pixelId);
+                pixel.classList.add('active');
+            }
+            
+            updateActiveCount();
+            updateOutput();
+        }
+
+        function toggleBrushMode() {
+            brushMode = !brushMode;
+            const toggle = document.getElementById('brushToggle');
+            
+            if (brushMode) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+        }
+
+        function fillAll() {
+            activePixels.clear();
+            
+            for (let row = 0; row < gridSize; row++) {
+                const rowWidth = shapePattern[row] || 0;
+                const startCol = Math.floor((gridSize - rowWidth) / 2);
+                const endCol = startCol + rowWidth - 1;
+                
+                for (let col = startCol; col <= endCol; col++) {
+                    activePixels.add(`${row}-${col}`);
+                }
+            }
+            
+            updateDisplay();
+        }
+
+        function eraseAll() {
+            activePixels.clear();
+            updateDisplay();
+        }
+
+        function reverse() {
+            const newActivePixels = new Set();
+            
+            for (let row = 0; row < gridSize; row++) {
+                const rowWidth = shapePattern[row] || 0;
+                const startCol = Math.floor((gridSize - rowWidth) / 2);
+                const endCol = startCol + rowWidth - 1;
+                
+                for (let col = startCol; col <= endCol; col++) {
+                    const pixelId = `${row}-${col}`;
+                    if (!activePixels.has(pixelId)) {
+                        newActivePixels.add(pixelId);
+                    }
+                }
+            }
+            
+            activePixels = newActivePixels;
+            updateDisplay();
+        }
+
+        function flipHorizontal() {
+            const newActivePixels = new Set();
+            
+            for (const pixelId of activePixels) {
+                const [row, col] = pixelId.split('-').map(Number);
+                const rowWidth = shapePattern[row] || 0;
+                const startCol = Math.floor((gridSize - rowWidth) / 2);
+                const endCol = startCol + rowWidth - 1;
+                
+                const newCol = endCol - (col - startCol);
+                newActivePixels.add(`${row}-${newCol}`);
+            }
+            
+            activePixels = newActivePixels;
+            updateDisplay();
+        }
+
+        function flipVertical() {
+            const newActivePixels = new Set();
+            
+            for (const pixelId of activePixels) {
+                const [row, col] = pixelId.split('-').map(Number);
+                const newRow = gridSize - 1 - row;
+                
+                const newRowWidth = shapePattern[newRow] || 0;
+                if (newRowWidth > 0) {
+                    const oldRowWidth = shapePattern[row] || 0;
+                    const oldStartCol = Math.floor((gridSize - oldRowWidth) / 2);
+                    const newStartCol = Math.floor((gridSize - newRowWidth) / 2);
+                    
+                    const relativePos = (col - oldStartCol) / Math.max(1, oldRowWidth - 1);
+                    const newCol = Math.round(newStartCol + relativePos * Math.max(1, newRowWidth - 1));
+                    
+                    if (newCol >= newStartCol && newCol < newStartCol + newRowWidth) {
+                        newActivePixels.add(`${newRow}-${newCol}`);
+                    }
+                }
+            }
+            
+            activePixels = newActivePixels;
+            updateDisplay();
+        }
+
+        function rotate90() {
+            const newActivePixels = new Set();
+            
+            for (const pixelId of activePixels) {
+                const [row, col] = pixelId.split('-').map(Number);
+                
+                const centerX = 12;
+                const centerY = 12;
+                const x = col - centerX;
+                const y = row - centerY;
+                
+                const newX = -y;
+                const newY = x;
+                
+                const newRow = newY + centerY;
+                const newCol = newX + centerX;
+                
+                if (newRow >= 0 && newRow < gridSize && newCol >= 0 && newCol < gridSize) {
+                    const newRowWidth = shapePattern[newRow] || 0;
+                    const newStartCol = Math.floor((gridSize - newRowWidth) / 2);
+                    const newEndCol = newStartCol + newRowWidth - 1;
+                    
+                    if (newCol >= newStartCol && newCol <= newEndCol) {
+                        newActivePixels.add(`${newRow}-${newCol}`);
+                    }
+                }
+            }
+            
+            activePixels = newActivePixels;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            pixels.forEach(pixel => {
+                const row = parseInt(pixel.dataset.row);
+                const col = parseInt(pixel.dataset.col);
+                const pixelId = `${row}-${col}`;
+                
+                if (activePixels.has(pixelId)) {
+                    pixel.classList.add('active');
+                } else {
+                    pixel.classList.remove('active');
+                }
+            });
+            
+            updateActiveCount();
+            updateOutput();
+        }
+
+        function updateActiveCount() {
+            document.getElementById('activeCount').textContent = activePixels.size;
+            document.getElementById('totalPixels').textContent = totalActivePixels;
+        }
+
+        function generateBinaryOutput() {
+            let binaryString = '';
+            
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    const pixelId = `${row}-${col}`;
+                    const rowWidth = shapePattern[row] || 0;
+                    const startCol = Math.floor((gridSize - rowWidth) / 2);
+                    const endCol = startCol + rowWidth - 1;
+                    
+                    if (col >= startCol && col <= endCol) {
+                        binaryString += activePixels.has(pixelId) ? '1' : '0';
+                    }
+                }
+            }
+            
+            return binaryString;
+        }
+
+        function updateOutput() {
+            const binary = generateBinaryOutput();
+            document.getElementById('binaryOutput').textContent = binary;
+        }
+
+        async function copyToClipboard() {
+            const binary = generateBinaryOutput();
+            
+            try {
+                await navigator.clipboard.writeText(binary);
+                showCopyFeedback();
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = binary;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    showCopyFeedback();
+                } catch (err) {
+                    console.error('Failed to copy');
+                }
+                
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function showCopyFeedback() {
+            const feedback = document.getElementById('copyFeedback');
+            feedback.classList.add('show');
+            
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 2000);
+        }
+
+        // Image processing functions
+        function createImageCanvas() {
+            imageCanvas = document.createElement('canvas');
+            imageCanvas.className = 'preview-canvas';
+            imageCanvas.width = 25;
+            imageCanvas.height = 25;
+            imageContext = imageCanvas.getContext('2d');
+            document.body.appendChild(imageCanvas);
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    uploadedImage = img;
+                    processImage();
+                    document.getElementById('importControls').style.display = 'block';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function processImage() {
+            if (!uploadedImage || !imageCanvas) return;
+
+            // Clear and resize canvas
+            imageContext.clearRect(0, 0, 25, 25);
+            
+            // Draw image to fit the 25x25 canvas
+            imageContext.drawImage(uploadedImage, 0, 0, 25, 25);
+            
+            // Apply brightness and contrast adjustments
+            applyImageFilters();
+        }
+
+        function applyImageFilters() {
+            if (!uploadedImage) return;
+
+            // Redraw original image
+            imageContext.clearRect(0, 0, 25, 25);
+            imageContext.drawImage(uploadedImage, 0, 0, 25, 25);
+
+            // Get image data
+            const imageData = imageContext.getImageData(0, 0, 25, 25);
+            const data = imageData.data;
+
+            const brightness = parseInt(document.getElementById('brightnessSlider').value);
+            const contrast = parseInt(document.getElementById('contrastSlider').value) / 100;
+
+            // Apply brightness and contrast
+            for (let i = 0; i < data.length; i += 4) {
+                // Apply contrast
+                data[i] = ((data[i] - 128) * contrast + 128); // Red
+                data[i + 1] = ((data[i + 1] - 128) * contrast + 128); // Green
+                data[i + 2] = ((data[i + 2] - 128) * contrast + 128); // Blue
+                
+                // Apply brightness
+                data[i] = Math.max(0, Math.min(255, data[i] + brightness)); // Red
+                data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + brightness)); // Green
+                data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + brightness)); // Blue
+            }
+
+            // Put modified image data back
+            imageContext.putImageData(imageData, 0, 0);
+        }
+
+        function updateThreshold() {
+            const value = document.getElementById('thresholdSlider').value;
+            document.getElementById('thresholdValue').textContent = value;
+        }
+
+        function updateBrightness() {
+            const value = document.getElementById('brightnessSlider').value;
+            document.getElementById('brightnessValue').textContent = value;
+            if (uploadedImage) {
+                applyImageFilters();
+            }
+        }
+
+        function updateContrast() {
+            const value = document.getElementById('contrastSlider').value;
+            document.getElementById('contrastValue').textContent = value;
+            if (uploadedImage) {
+                applyImageFilters();
+            }
+        }
+
+        function applyImageToPixels() {
+            if (!uploadedImage) return;
+
+            const threshold = parseInt(document.getElementById('thresholdSlider').value);
+            const imageData = imageContext.getImageData(0, 0, 25, 25);
+            const data = imageData.data;
+
+            // Clear current pixels
+            activePixels.clear();
+
+            // Process each pixel
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    // Check if this position is valid in the glyph matrix
+                    const rowWidth = shapePattern[row] || 0;
+                    const startCol = Math.floor((gridSize - rowWidth) / 2);
+                    const endCol = startCol + rowWidth - 1;
+                    
+                    if (col >= startCol && col <= endCol) {
+                        // Get pixel data from image
+                        const pixelIndex = (row * 25 + col) * 4;
+                        const r = data[pixelIndex];
+                        const g = data[pixelIndex + 1];
+                        const b = data[pixelIndex + 2];
+                        
+                        // Calculate brightness (luminance)
+                        const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+                        
+                        // Apply threshold - darker pixels become active (inverted for better results)
+                        if (brightness < threshold) {
+                            activePixels.add(`${row}-${col}`);
+                        }
+                    }
+                }
+            }
+
+            updateDisplay();
+        }
+
+        // Initialise
+        initializeGrid();
+        createImageCanvas();
+        initCollapsibleControls();
+
+        // Collapsible controls initialisation
+        function initCollapsibleControls() {
+            document.querySelectorAll('.control-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const section = header.parentElement;
+                    section.classList.toggle('collapsed');
+                });
+            });
+        }
+    </script>
+</body>
+</html>
