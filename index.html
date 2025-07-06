@@ -164,16 +164,18 @@
                                         <label>Search Emoji:</label>
                                         <input type="text" id="emojiSearch" placeholder="Search emojis...">
                                     </div>
-                                    <div class="emoji-categories">
-                                        <button class="category-btn active" data-category="smileys">😊</button>
-                                        <button class="category-btn" data-category="people">👤</button>
-                                        <button class="category-btn" data-category="animals">🐱</button>
-                                        <button class="category-btn" data-category="food">🍕</button>
-                                        <button class="category-btn" data-category="travel">🚗</button>
-                                        <button class="category-btn" data-category="activities">⚽</button>
-                                        <button class="category-btn" data-category="objects">💡</button>
-                                        <button class="category-btn" data-category="symbols">❤️</button>
-                                        <button class="category-btn" data-category="flags">🏳️</button>
+                                    <div class="emoji-categories-container">
+                                        <div class="emoji-categories">
+                                            <button class="category-btn active" data-category="smileys">😊</button>
+                                            <button class="category-btn" data-category="people">👤</button>
+                                            <button class="category-btn" data-category="animals">🐱</button>
+                                            <button class="category-btn" data-category="food">🍕</button>
+                                            <button class="category-btn" data-category="travel">🚗</button>
+                                            <button class="category-btn" data-category="activities">⚽</button>
+                                            <button class="category-btn" data-category="objects">💡</button>
+                                            <button class="category-btn" data-category="symbols">❤️</button>
+                                            <button class="category-btn" data-category="flags">🏳️</button>
+                                        </div>
                                     </div>
                                     <div class="emoji-selector">
                                         <div class="emoji-grid" id="emojiGrid">
@@ -208,18 +210,6 @@
 
                         <!-- Image Import Controls -->
                         <div class="import-controls" id="importControls" style="display: none;">
-                            <div class="import-mode">
-                                <label class="mode-label">Mode</label>
-                                <select id="importMode" class="mode-select">
-                                    <option value="threshold">Threshold</option>
-                                    <option value="grayscale">Grayscale</option>
-                                </select>
-                            </div>
-                            <div class="slider-group" id="thresholdGroup">
-                                <label class="slider-label">Threshold</label>
-                                <input type="range" id="thresholdSlider" min="0" max="255" value="128" class="slider" title="Double-click to reset">
-                                <input type="number" id="thresholdValue" min="0" max="255" value="128" class="slider-input">
-                            </div>
                             <div class="slider-group">
                                 <label class="slider-label">Brightness</label>
                                 <input type="range" id="brightnessSlider" min="-100" max="100" value="0" class="slider" title="Double-click to reset">
@@ -232,7 +222,7 @@
                             </div>
                             <button class="btn" id="applyBtn">
                                 <span class="btn-icon">✓</span>
-                                Apply to Grid
+                                Apply Settings
                             </button>
                         </div>
                     </div>
@@ -261,6 +251,7 @@
         </div>
     </div>
 
+    <script src="emojiNames.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

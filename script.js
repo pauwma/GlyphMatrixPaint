@@ -44,10 +44,6 @@ const emojiBtn = document.getElementById('emojiBtn');
 const binaryBtn = document.getElementById('binaryBtn');
 const importControls = document.getElementById('importControls');
 const binaryImportControls = document.getElementById('binaryImportControls');
-const importMode = document.getElementById('importMode');
-const thresholdGroup = document.getElementById('thresholdGroup');
-const thresholdSlider = document.getElementById('thresholdSlider');
-const thresholdValue = document.getElementById('thresholdValue');
 const brightnessSlider = document.getElementById('brightnessSlider');
 const brightnessValue = document.getElementById('brightnessValue');
 const contrastSlider = document.getElementById('contrastSlider');
@@ -712,6 +708,8 @@ async function pasteFromClipboard() {
                         processImage();
                         importControls.style.display = 'block';
                         showPasteFeedback('Image pasted successfully!', 'success');
+                        // Auto-apply the image immediately
+                        applyImageToPixels();
                         URL.revokeObjectURL(url);
                     };
                     img.src = url;
@@ -762,20 +760,8 @@ function showEmojiModal() {
 
 function hideEmojiModal() {
     emojiModal.style.display = 'none';
-    // Reset to first emoji and category
-    selectedEmoji = '😀';
-    selectedEmojiDisplay.textContent = selectedEmoji;
-    currentCategory = 'smileys';
-    
-    // Reset category buttons
-    categoryBtns.forEach(btn => btn.classList.remove('active'));
-    categoryBtns[0].classList.add('active');
-    
-    // Reset search
-    emojiSearch.value = '';
-    
-    // Repopulate grid
-    populateEmojiGrid(currentCategory);
+    // DON'T reset emoji selection and category - keep user's current state
+    // This preserves the selected emoji and category for next time
 }
 
 function generateTextPixelArt() {
@@ -850,9 +836,7 @@ function processCanvasAsImage(canvas) {
         processImage();
         importControls.style.display = 'block';
         
-        // Auto-apply with grayscale mode (inverted)
-        importMode.value = 'grayscale';
-        updateImportMode();
+        // Auto-apply with grayscale mode
         applyImageToPixels();
     };
     img.src = canvas.toDataURL();
@@ -879,6 +863,8 @@ function handleImageUpload(event) {
             uploadedImage = img;
             processImage();
             importControls.style.display = 'block';
+            // Auto-apply the image immediately
+            applyImageToPixels();
         };
         img.src = e.target.result;
     };
@@ -955,8 +941,6 @@ function updateEmojiSize() {
 function applyImageToPixels() {
     if (!uploadedImage) return;
 
-    const mode = importMode.value;
-    const threshold = parseInt(thresholdSlider.value);
     const imageData = imageContext.getImageData(0, 0, 25, 25);
     const data = imageData.data;
 
@@ -977,17 +961,10 @@ function applyImageToPixels() {
                 const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
                 const pixelId = `${row}-${col}`;
                 
-                if (mode === 'threshold') {
-                    // Inverted threshold logic
-                    if (brightness > threshold) {
-                        pixelOpacities.set(pixelId, 255);
-                    }
-                } else {
-                    // Inverted grayscale logic
-                    const opacity = Math.round(brightness);
-                    if (opacity > 0) {
-                        pixelOpacities.set(pixelId, opacity);
-                    }
+                // Always use grayscale logic
+                const opacity = Math.round(brightness);
+                if (opacity > 0) {
+                    pixelOpacities.set(pixelId, opacity);
                 }
             }
         }
@@ -996,14 +973,8 @@ function applyImageToPixels() {
     saveToHistory();
     updateDisplay();
     
-    // Hide import controls after applying
-    importControls.style.display = 'none';
-    
-    // Clear the uploaded image to allow normal editing
-    uploadedImage = null;
-    
-    // Reset image upload input
-    imageUpload.value = '';
+    // DON'T hide import controls - keep them visible for editing
+    // DON'T clear uploadedImage - keep it for re-applying with different settings
 }
 
 // Emoji functions
@@ -1057,7 +1028,7 @@ function handleCategoryChange() {
 
 function handleEmojiSearch() {
     emojiSearch.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
+        const searchTerm = e.target.value.toLowerCase().trim();
         
         if (searchTerm === '') {
             populateEmojiGrid(currentCategory);
@@ -1067,12 +1038,30 @@ function handleEmojiSearch() {
         // Search through all emojis
         const allEmojis = Object.values(emojiData).flat();
         const filteredEmojis = allEmojis.filter(emoji => {
-            // This is a simple search - you could enhance this with emoji names/descriptions
+            // Check if emoji has associated names (only if emojiNames is defined)
+            if (typeof emojiNames !== 'undefined' && emojiNames[emoji]) {
+                const names = emojiNames[emoji];
+                return names.some(name => name.toLowerCase().includes(searchTerm));
+            }
+            // Fallback to emoji character matching
             return emoji.includes(searchTerm);
         });
         
         // Populate grid with filtered results
         emojiGrid.innerHTML = '';
+        
+        if (filteredEmojis.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.style.gridColumn = '1 / -1';
+            noResults.style.textAlign = 'center';
+            noResults.style.padding = '20px';
+            noResults.style.color = '#666';
+            noResults.style.fontSize = '0.8rem';
+            noResults.textContent = 'No emojis found';
+            emojiGrid.appendChild(noResults);
+            return;
+        }
+        
         filteredEmojis.forEach(emoji => {
             const button = document.createElement('button');
             button.className = 'emoji-option';
@@ -1091,7 +1080,7 @@ function downloadAsImage() {
     
     // Set canvas size for higher resolution
     const pixelSize = 40; // Each pixel will be 40x40 pixels
-    const gapSize = 20; // Gap between pixels (adjust this to match your CSS gap)
+    const gapSize = 10; // Gap between pixels (adjust this to match your CSS gap)
     const scaleFactor = pixelSize + gapSize;
     
     canvas.width = gridSize * scaleFactor - gapSize; // Subtract gap from last pixel
@@ -1178,7 +1167,6 @@ pasteBtn.addEventListener('click', pasteFromClipboard);
 textBtn.addEventListener('click', showTextModal);
 emojiBtn.addEventListener('click', showEmojiModal);
 imageUpload.addEventListener('change', handleImageUpload);
-importMode.addEventListener('change', updateImportMode);
 applyBtn.addEventListener('click', applyImageToPixels);
 fillBtn.addEventListener('click', fillAll);
 clearBtn.addEventListener('click', eraseAll);
@@ -1233,7 +1221,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup slider pairs
     setupSliderPair(opacitySlider, opacityValue, updateOpacity, defaultValues.opacity);
-    setupSliderPair(thresholdSlider, thresholdValue, updateThreshold, defaultValues.threshold);
     setupSliderPair(brightnessSlider, brightnessValue, updateBrightness, defaultValues.brightness);
     setupSliderPair(contrastSlider, contrastValue, updateContrast, defaultValues.contrast);
     setupSliderPair(fontSizeSlider, fontSizeValue, updateFontSize, defaultValues.fontSize);
