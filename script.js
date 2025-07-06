@@ -1086,11 +1086,10 @@ function downloadAsImage() {
     canvas.width = gridSize * scaleFactor - gapSize; // Subtract gap from last pixel
     canvas.height = gridSize * scaleFactor - gapSize;
     
-    // Fill background with dark gray to show gaps
-    ctx.fillStyle = '#111111'; // This matches your CSS background color
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // DON'T fill background - leave it transparent
+    // The canvas starts transparent by default
     
-    // Draw each pixel within the valid shape pattern
+    // Draw each pixel ONLY within the valid shape pattern
     for (let row = 0; row < gridSize; row++) {
         const rowWidth = shapePattern[row] || 0;
         const startCol = Math.floor((gridSize - rowWidth) / 2);
@@ -1104,16 +1103,16 @@ function downloadAsImage() {
             const x = col * scaleFactor;
             const y = row * scaleFactor;
             
+            // Draw background pixel (dark gray) for all pixels within the sphere
+            ctx.fillStyle = '#111111'; // Dark background for the sphere area
+            ctx.fillRect(x, y, pixelSize, pixelSize);
+            
+            // If pixel has opacity, draw it on top
             if (opacity > 0) {
-                // Draw active pixels with their opacity value
                 const grayValue = Math.round(opacity);
                 ctx.fillStyle = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
-            } else {
-                // Draw inactive pixels within the sphere as black
-                ctx.fillStyle = `rgb(0, 0, 0)`;
+                ctx.fillRect(x, y, pixelSize, pixelSize);
             }
-            
-            ctx.fillRect(x, y, pixelSize, pixelSize);
         }
     }
     
