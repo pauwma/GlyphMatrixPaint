@@ -115,10 +115,10 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
 .grid {
     display: grid;
     grid-template-columns: repeat(25, 1fr);
-    gap: 5px;
+    gap: 3px;
     background: #111;
     padding: 1px;
-    margin: 0 auto;
+    margin: 20 auto;
 }
 
 .pixel {
@@ -396,6 +396,8 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
         justify-content: center;
         align-items: center;
         margin: 0 auto;
+        max-width: 100%;
+        overflow: visible;
     }
 
     .pixel {
@@ -412,11 +414,11 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
 
 @media (max-width: 768px) {
     .container {
-        padding: 10px;
+        padding: 8px;
     }
     
     .main-content {
-        gap: 30px;
+        gap: 25px;
         padding: 0;
     }
 
@@ -433,11 +435,18 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
         display: flex;
         justify-content: center;
         align-items: center;
+        max-width: 100%;
+        padding: 15px;
+        overflow: visible;
+    }
+
+    .grid {
+        gap: 0.2rem;
     }
 
     .pixel {
-        width: 16px;
-        height: 16px;
+        width: 15px;
+        height: 15px;
     }
 
     .header h1 {
@@ -457,17 +466,23 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
     }
     
     .grid-container {
-        padding: 10px;
+        padding: 8px;
         margin: 0 auto;
+        max-width: 100%;
+        overflow: visible;
+    }
+
+    .grid {
+        gap: 0.15rem;
     }
 
     .pixel {
-        width: 14px;
-        height: 14px;
+        width: 12px;
+        height: 12px;
     }
 
     .header {
-        padding: 0 10px 20px 10px;
+        padding: 0 5px 15px 5px;
     }
 
     .header h1 {
@@ -479,10 +494,74 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
     }
 
     .control-content {
-        padding: 15px;
+        padding: 12px;
     }
 }
 
+@media (max-width: 390px) {
+    .container {
+        padding: 3px;
+    }
+    
+    .grid-container {
+        padding: 5px;
+        margin: 0 auto;
+        max-width: 100%;
+        overflow: visible;
+    }
+
+    .grid {
+        gap: 0.1rem;
+    }
+
+    .pixel {
+        width: 10px;
+        height: 10px;
+    }
+
+    .header {
+        padding: 0 3px 12px 3px;
+    }
+
+    .header h1 {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 320px) {
+    .container {
+        padding: 2px;
+    }
+    
+    .grid-container {
+        padding: 3px;
+        margin: 0 auto;
+        max-width: 100%;
+        overflow: visible;
+    }
+
+    .grid {
+        gap: 0.08rem;
+    }
+
+    .pixel {
+        width: 8px;
+        height: 8px;
+    }
+
+    .header {
+        padding: 0 2px 10px 2px;
+    }
+
+    .header h1 {
+        font-size: 1.4rem;
+    }
+
+    .header .main-title {
+        font-size: 1.4rem;
+        line-height: 1.2rem;
+    }
+}
 
 
 /* Scrollbar styling */
