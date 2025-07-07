@@ -66,14 +66,16 @@ body {
     margin-top: 1rem;
 }
 
-/*Hyperlink*/
+/* ---------- Hyperlink ---------- */
 a {
-    color: inherit;            /* mismo tono que el texto circundante */
+    color: inherit;
     text-decoration: underline;
 }
 
-a:visited { color: inherit; }   /* sin morado “visited” */
-a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
+a:visited { color: inherit; } 
+a:hover   { opacity: .8; }
+
+/* ------------------------------- */
 
 .header p {
     font-size: 0.9rem;
@@ -125,7 +127,7 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
     width: 24px;
     height: 24px;
     background: #000;
-    border: 1px solid #222;
+    /*border: 0px solid #222;*/
     cursor: crosshair;
     transition: all 0.1s ease;
     position: relative;
@@ -213,6 +215,9 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
     width: 100%;
 }
 
+
+/*---------- INI - BUTTONS ----------*/
+
 .btn {
     background: transparent;
     color: #fff;
@@ -248,7 +253,7 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
 }
 
 .btn.danger:hover {
-    background: #000;
+    background: #d71921;
     color: #fff;
     border-color: #fff;
 }
@@ -264,6 +269,9 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
     font-size: 0.9rem;
     opacity: 0.8;
 }
+
+/*---------- END - BUTTONS ----------*/
+
 
 .output-section {
     background: #111;
@@ -368,6 +376,79 @@ a:hover   { opacity: .8; }      /* ligera atenuación al pasar el ratón */
     font-size: 0.7rem;
     color: #666;
     font-family: 'Courier New', monospace;
+}
+
+/* Action rows layout */
+.action-row {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+    width: 100%;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.action-row.single {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.action-row.single .btn {
+    width: 100%;
+    min-width: 0;
+    flex: none;
+}
+
+.action-row.two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.action-row.two .btn {
+    width: 100%;
+    min-width: 0;
+    flex: none;
+}
+
+.action-btn {
+    margin-bottom: 0;
+    padding: 10px 12px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+    .action-btn {
+        font-size: 0.65rem;
+        padding: 8px 10px;
+        min-height: 36px;
+    }
+    
+    .btn-icon {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .action-btn {
+        font-size: 0.6rem;
+        padding: 6px 8px;
+        min-height: 32px;
+    }
+    
+    .btn-icon {
+        font-size: 0.7rem;
+    }
 }
 
 @media (max-width: 1024px) {

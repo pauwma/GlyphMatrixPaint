@@ -55,69 +55,78 @@
                         </div>
                     </div>
                 </div>
-
+                
                 <div class="control-section">
                     <div class="control-header">
                         <h3>Actions</h3>
                     </div>
                     <div class="control-content">
-                        <button class="btn primary" id="fillBtn">
-                            <span class="btn-icon">■</span>
-                            Fill All
-                        </button>
-                        <button class="btn danger" id="clearBtn">
-                            <span class="btn-icon">✕</span>
-                            Clear All
-                        </button>
-                        <button class="btn" id="invertBtn">
-                            <span class="btn-icon">⚹</span>
-                            Invert
-                        </button>
+                        <!-- Top row: Fill, Clear, Invert -->
+                        <div class="action-row">
+                            <button class="btn primary action-btn" id="fillBtn">
+                                <span class="btn-icon">◼</span>
+                                Fill
+                            </button>
+                            <button class="btn danger action-btn" id="clearBtn">
+                                <span class="btn-icon">✕</span>
+                                Clear
+                            </button>
+                            <button class="btn action-btn" id="invertBtn">
+                                <span class="btn-icon">⚹</span>
+                                Invert
+                            </button>
+                        </div>
+                        
+                        <!-- Middle row: Flip buttons -->
+                        <div class="action-row">
+                            <button class="btn action-btn" id="flipHBtn">
+                                <span class="btn-icon">⇄</span>
+                                Mirror
+                            </button>
+                            <button class="btn action-btn" id="flipVBtn">
+                                <span class="btn-icon">⇅</span>
+                                Flip
+                            </button>
+                            <button class="btn action-btn" id="rotateBtn">
+                                <span class="btn-icon">↻</span>
+                                Rotate
+                            </button>
+                        </div>
+                        
                     </div>
                 </div>
-
-                <div class="control-section collapsed">
-                    <div class="control-header">
-                        <h3>Transform</h3>
-                    </div>
-                    <div class="control-content">
-                        <button class="btn" id="flipHBtn">
-                            <span class="btn-icon">⇄</span>
-                            Flip Horizontal
-                        </button>
-                        <button class="btn" id="flipVBtn">
-                            <span class="btn-icon">⇅</span>
-                            Flip Vertical
-                        </button>
-                        <button class="btn" id="rotateBtn">
-                            <span class="btn-icon">↻</span>
-                            Rotate 90°
-                        </button>
-                    </div>
-                </div>
-
-                <div class="control-section collapsed">
+                
+                <div class="control-section">
                     <div class="control-header">
                         <h3>Import</h3>
                     </div>
                     <div class="control-content">
-                        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-                        <button class="btn primary" id="uploadBtn">
-                            <span class="btn-icon">📁</span>
-                            Upload Image
-                        </button>
-                        <button class="btn" id="pasteBtn">
-                            <span class="btn-icon">📋</span>
-                            Image from Clipboard
-                        </button>
-                        <button class="btn" id="textBtn">
-                            <span class="btn-icon">🔤</span>
-                            Text to Pixel Art
-                        </button>
-                        <button class="btn" id="emojiBtn">
-                            <span class="btn-icon">😀</span>
-                            Emoji to Pixel Art
-                        </button>
+                        <!-- First row: Upload and Paste -->
+                        <div class="action-row two">
+                            <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                            <button class="btn primary action-btn" id="uploadBtn">
+                                <span class="btn-icon">📁</span>
+                                Upload
+                            </button>
+                            <button class="btn action-btn" id="pasteBtn">
+                                <span class="btn-icon">📋</span>
+                                Paste
+                            </button>
+                        </div>
+
+                        <!-- Second row: Text and Emoji -->
+                        <div class="action-row two">
+                            <button class="btn action-btn" id="textBtn">
+                                <span class="btn-icon">🔤</span>
+                                Text
+                            </button>
+                            <button class="btn action-btn" id="emojiBtn">
+                                <span class="btn-icon">😀</span>
+                                Emoji
+                            </button>
+                        </div>
+
+                        <!-- Third row: Import Raw Data (full width) -->
                         <button class="btn" id="binaryBtn">
                             <span class="btn-icon">🔢</span>
                             Import Raw Data
