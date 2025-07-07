@@ -1209,6 +1209,9 @@ document.addEventListener('keydown', (e) => {
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Feather Icons
+    feather.replace();
+    
     initializeGrid();
     createImageCanvas();
     initCollapsibleControls();

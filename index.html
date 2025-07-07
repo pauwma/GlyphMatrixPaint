@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Glyph Matrix Editor</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
     <div class="container">
@@ -64,15 +65,15 @@
                         <!-- Top row: Fill, Clear, Invert -->
                         <div class="action-row">
                             <button class="btn primary action-btn" id="fillBtn">
-                                <span class="btn-icon">◼</span>
+                                <i data-feather="droplet" class="btn-icon"></i>
                                 Fill
                             </button>
                             <button class="btn danger action-btn" id="clearBtn">
-                                <span class="btn-icon">✕</span>
+                                <i data-feather="x" class="btn-icon"></i>
                                 Clear
                             </button>
                             <button class="btn action-btn" id="invertBtn">
-                                <span class="btn-icon">⚹</span>
+                                <i data-feather="repeat" class="btn-icon"></i>
                                 Invert
                             </button>
                         </div>
@@ -88,7 +89,7 @@
                                 Flip
                             </button>
                             <button class="btn action-btn" id="rotateBtn">
-                                <span class="btn-icon">↻</span>
+                                <i data-feather="rotate-cw" class="btn-icon"></i>
                                 Rotate
                             </button>
                         </div>
@@ -105,11 +106,11 @@
                         <div class="action-row two">
                             <input type="file" id="imageUpload" accept="image/*" style="display: none;">
                             <button class="btn primary action-btn" id="uploadBtn">
-                                <span class="btn-icon">📁</span>
+                                <i data-feather="image" class="btn-icon"></i>
                                 Upload Image
                             </button>
                             <button class="btn action-btn" id="pasteBtn">
-                                <span class="btn-icon">📋</span>
+                                <i data-feather="clipboard" class="btn-icon"></i>
                                 Paste Image
                             </button>
                         </div>
@@ -117,18 +118,18 @@
                         <!-- Second row: Text and Emoji -->
                         <div class="action-row two">
                             <button class="btn action-btn" id="textBtn">
-                                <span class="btn-icon">🔤</span>
+                                <i data-feather="type" class="btn-icon"></i>
                                 Text
                             </button>
                             <button class="btn action-btn" id="emojiBtn">
-                                <span class="btn-icon">😀</span>
+                                <i data-feather="smile" class="btn-icon"></i>
                                 Emoji
                             </button>
                         </div>
 
                         <!-- Third row: Import Raw Data (full width) -->
                         <button class="btn" id="binaryBtn">
-                            <span class="btn-icon">🔢</span>
+                                <i data-feather="file-text" class="btn-icon"></i>
                             Import Raw Data
                         </button>
                         
@@ -230,7 +231,7 @@
                                 <input type="number" id="contrastValue" min="0" max="200" value="100" class="slider-input">
                             </div>
                             <button class="btn" id="applyBtn">
-                                <span class="btn-icon">✓</span>
+                                <i data-feather="check" class="btn-icon"></i>
                                 Apply Settings
                             </button>
                         </div>
@@ -243,14 +244,14 @@
                     </div>
                     <div class="control-content">
                         <button class="btn primary" id="downloadBtn">
-                            <span class="btn-icon">💾</span>
+                                <i data-feather="download" class="btn-icon"></i>
                             Download as Image
                         </button>
                         <div class="output-section" id="binaryOutput">
                             Raw data will appear here...
                         </div>
                         <button class="btn primary" id="copyBtn">
-                            <span class="btn-icon">📋</span>
+                                <i data-feather="copy" class="btn-icon"></i>
                             Copy Raw
                         </button>
                         <div class="copy-feedback" id="copyFeedback">Copied to clipboard</div>
