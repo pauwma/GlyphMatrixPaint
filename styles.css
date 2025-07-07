@@ -714,6 +714,7 @@ a:hover   { opacity: .8; }
 /* Scrollbar styling */
 ::-webkit-scrollbar {
     width: 6px;
+    display: none;
 }
 
 ::-webkit-scrollbar-track {
