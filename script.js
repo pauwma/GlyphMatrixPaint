@@ -236,20 +236,7 @@ function applyBinaryData() {
 }
 
 function showBinaryFeedback(message, type) {
-    let feedback = document.getElementById('binaryFeedback');
-    if (!feedback) {
-        feedback = document.createElement('div');
-        feedback.id = 'binaryFeedback';
-        feedback.className = 'paste-feedback';
-        document.body.appendChild(feedback);
-    }
-    
-    feedback.textContent = message;
-    feedback.className = `paste-feedback show ${type}`;
-    
-    setTimeout(() => {
-        feedback.classList.remove('show');
-    }, 3000);
+    showFeedback(message, type);
 }
 
 // Initialize grid
@@ -660,7 +647,7 @@ async function copyToClipboard() {
     
     try {
         await navigator.clipboard.writeText(binary);
-        showCopyFeedback();
+        showFeedback('Raw data copied to clipboard!', 'success');
     } catch (err) {
         // Fallback for older browsers
         const textArea = document.createElement('textarea');
@@ -674,9 +661,9 @@ async function copyToClipboard() {
         
         try {
             document.execCommand('copy');
-            showCopyFeedback();
+            showFeedback('Raw data copied to clipboard!', 'success');
         } catch (err) {
-            console.error('Failed to copy');
+            showFeedback('Failed to copy raw data', 'error');
         }
         
         document.body.removeChild(textArea);
@@ -707,9 +694,13 @@ async function pasteFromClipboard() {
                         uploadedImage = img;
                         processImage();
                         importControls.style.display = 'block';
-                        showPasteFeedback('Image pasted successfully!', 'success');
+                        showFeedback('Image pasted successfully!', 'success');
                         // Auto-apply the image immediately
                         applyImageToPixels();
+                        URL.revokeObjectURL(url);
+                    };
+                    img.onerror = function() {
+                        showFeedback('Failed to process pasted image', 'error');
                         URL.revokeObjectURL(url);
                     };
                     img.src = url;
@@ -718,28 +709,35 @@ async function pasteFromClipboard() {
             }
         }
         
-        showPasteFeedback('No image found in clipboard', 'error');
+        showFeedback('No image found in clipboard', 'error');
     } catch (err) {
-        showPasteFeedback('Failed to paste from clipboard', 'error');
+        showFeedback('Failed to paste from clipboard', 'error');
         console.error('Paste error:', err);
     }
 }
 
-function showPasteFeedback(message, type) {
-    // Create feedback element if it doesn't exist
-    let feedback = document.getElementById('pasteFeedback');
-    if (!feedback) {
-        feedback = document.createElement('div');
-        feedback.id = 'pasteFeedback';
-        feedback.className = 'paste-feedback';
-        document.body.appendChild(feedback);
+function showFeedback(message, type = 'success') {
+    // Remove any existing feedback
+    const existingFeedback = document.getElementById('unifiedFeedback');
+    if (existingFeedback) {
+        existingFeedback.remove();
     }
     
+    // Create new feedback element
+    const feedback = document.createElement('div');
+    feedback.id = 'unifiedFeedback';
+    feedback.className = `unified-feedback show ${type}`;
     feedback.textContent = message;
-    feedback.className = `paste-feedback show ${type}`;
+    document.body.appendChild(feedback);
     
+    // Auto-hide after 3 seconds
     setTimeout(() => {
         feedback.classList.remove('show');
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 300); // Wait for fade out animation
     }, 3000);
 }
 
@@ -856,6 +854,18 @@ function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+        showFeedback('Please select a valid image file', 'error');
+        return;
+    }
+
+    // Check file size (optional - limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showFeedback('Image file is too large (max 10MB)', 'error');
+        return;
+    }
+
     const reader = new FileReader();
     reader.onload = function(e) {
         const img = new Image();
@@ -863,10 +873,17 @@ function handleImageUpload(event) {
             uploadedImage = img;
             processImage();
             importControls.style.display = 'block';
+            showFeedback('Image uploaded successfully!', 'success');
             // Auto-apply the image immediately
             applyImageToPixels();
         };
+        img.onerror = function() {
+            showFeedback('Failed to process uploaded image', 'error');
+        };
         img.src = e.target.result;
+    };
+    reader.onerror = function() {
+        showFeedback('Failed to read image file', 'error');
     };
     reader.readAsDataURL(file);
 }
@@ -1132,21 +1149,7 @@ function downloadAsImage() {
 }
 
 function showDownloadFeedback() {
-    // Create feedback element if it doesn't exist
-    let feedback = document.getElementById('downloadFeedback');
-    if (!feedback) {
-        feedback = document.createElement('div');
-        feedback.id = 'downloadFeedback';
-        feedback.className = 'paste-feedback';
-        document.body.appendChild(feedback);
-    }
-    
-    feedback.textContent = 'Image downloaded successfully!';
-    feedback.className = 'paste-feedback show success';
-    
-    setTimeout(() => {
-        feedback.classList.remove('show');
-    }, 3000);
+    showFeedback('Image downloaded successfully!', 'success');
 }
 
 // Collapsible controls
