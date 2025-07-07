@@ -139,10 +139,11 @@ a:hover   { opacity: .8; }
 }
 
 .pixel.inactive {
-    background: #000;
+    background: #363636c5;
     border-color: #000;
     cursor: default;
-    opacity: 0.1;
+    border: 2px solid #949393b4;
+    opacity: 0.2;
 }
 
 .pixel:not(.inactive):hover {
@@ -161,7 +162,7 @@ a:hover   { opacity: .8; }
 .controls {
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 25px;
     width: 420px;
 }
 
@@ -211,8 +212,11 @@ a:hover   { opacity: .8; }
 }
 
 .control-content {
-    padding: 20px;
-    width: 100%;
+    padding: 20px 20px 20px 20px;
+}
+
+.control-content > *:last-child {
+    margin-bottom: 0;
 }
 
 
@@ -271,6 +275,68 @@ a:hover   { opacity: .8; }
 }
 
 /*---------- END - BUTTONS ----------*/
+
+
+/*---------- INI - SEPARATOR ----------*/
+/* Section separators */
+.section-separator {
+    font-size: 0.8rem; /* Even larger text */
+    color: #ccc; /* Better contrast */
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin: 25px 0 20px 0;
+    text-align: center;
+    position: relative;
+    font-weight: 500;
+    padding-top: 15px;
+}
+
+/* First separator without top margin */
+.section-separator:first-of-type {
+    padding-top: 0px;
+}
+
+/* Add line through separator */
+/* Line above the text */
+.section-separator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20%;
+    right: 20%;
+    height: 1px;
+    background: #333;
+}
+
+/* First separator without line */
+.section-separator:first-of-type::before {
+    display: none;
+}
+
+/* Text on top of line */
+.section-separator::after {
+    content: '';
+    position: relative;
+    z-index: 1;
+}
+
+/* Alternative simpler separator without line */
+.section-separator {
+    font-size: 0.65rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin: 25px 0 20px 0;
+    text-align: center;
+    position: relative;
+    font-weight: 500;
+}
+
+/* First separator without top margin */
+.section-separator:first-of-type {
+    margin-top: 15px;
+}
+/*---------- END - SEPARATOR ----------*/
 
 
 .output-section {
