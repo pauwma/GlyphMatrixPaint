@@ -11,6 +11,7 @@
     box-sizing: border-box;
 }
 
+/* ~ ---- INI - FONTS ---- */
 @font-face {
   font-family: 'NType82';
   src: url('fonts/NType82-Regular.otf');
@@ -20,6 +21,12 @@
   font-family: 'Ndot57';
   src: url('fonts/Ndot-57.otf');
 }
+
+@font-face {
+  font-family: 'Ranyth';
+  src: url('fonts/Ranyth.ttf');
+}
+/* ~ ---- END - FONTS ---- */
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -905,7 +912,7 @@ a:hover   { opacity: .8; }
     border: 1px solid #333;
     padding: 12px 15px;
     font-size: 0.85rem;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Ndot-57', sans-serif;
     border-radius: 0;
     outline: none;
     transition: border-color 0.2s ease;

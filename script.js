@@ -84,7 +84,7 @@ const fontSizeSlider = document.getElementById('fontSizeSlider');
 const fontSizeValue = document.getElementById('fontSizeValue');
 const emojiSizeSlider = document.getElementById('emojiSizeSlider');
 const emojiSizeValue = document.getElementById('emojiSizeValue');
-const fontWeight = document.getElementById('fontWeight');
+const fontType = document.getElementById('fontType');
 const generateTextBtn = document.getElementById('generateTextBtn');
 const generateEmojiBtn = document.getElementById('generateEmojiBtn');
 
@@ -767,7 +767,7 @@ function generateTextPixelArt() {
     if (!text) return;
     
     const fontSize = parseInt(fontSizeSlider.value);
-    const fontWeightValue = fontWeight.value;
+    const fontType = document.getElementById('fontType').value;
     
     const canvas = document.createElement('canvas');
     canvas.width = 25;
@@ -779,13 +779,20 @@ function generateTextPixelArt() {
     ctx.fillRect(0, 0, 25, 25);
     
     // Set font
-    ctx.font = `${fontWeightValue} ${fontSize}px Arial, sans-serif`;
+    ctx.font = `${fontSize}px '${fontType}', sans-serif`;
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
+    // Measure text
+    const metrics = ctx.measureText(text);
+    const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+        
+    // Center position
+    const centerY = (25 - textHeight) / 2 + metrics.actualBoundingBoxAscent;
+        
     // Draw text
-    ctx.fillText(text, 12.5, 12.5);
+    ctx.fillText(text, 12.5, centerY);
     
     // Process the canvas as an image (will be inverted)
     processCanvasAsImage(canvas);
