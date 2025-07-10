@@ -6,6 +6,10 @@
     <title>Glyph Matrix Editor</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/feather-icons"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Emoji:wght@300..700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
@@ -136,7 +140,7 @@
                                     <button class="modal-close" id="closeTextModal">×</button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="input-group">
+                                    <div class="input-group top-group">
                                         <label>Text:</label>
                                         <input type="text" id="textInput" placeholder="Enter text..." maxlength="10">
                                     </div>
@@ -166,7 +170,7 @@
                                     <button class="modal-close" id="closeEmojiModal">×</button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="input-group">
+                                    <div class="input-group top-group">
                                         <label>Search Emoji:</label>
                                         <input type="text" id="emojiSearch" placeholder="Search emojis...">
                                     </div>
@@ -179,7 +183,7 @@
                                             <button class="category-btn" data-category="travel">🚗</button>
                                             <button class="category-btn" data-category="activities">⚽</button>
                                             <button class="category-btn" data-category="objects">💡</button>
-                                            <button class="category-btn" data-category="symbols">❤️</button>
+                                            <button class="category-btn" data-category="symbols">🤍</button>
                                             <button class="category-btn" data-category="flags">🏳️</button>
                                         </div>
                                     </div>
@@ -192,10 +196,16 @@
                                         <span class="selected-emoji-display">😀</span>
                                         <span class="selected-emoji-label">Selected</span>
                                     </div>
-                                    <div class="input-group">
-                                        <label>Size:</label>
-                                        <input type="range" id="emojiSizeSlider" min="12" max="24" value="20" class="slider" title="Double-click to reset">
-                                        <input type="number" id="emojiSizeValue" min="12" max="24" value="20" class="slider-input">
+                                    <div class="emoji-controls">
+                                        <div class="input-group">
+                                            <label>Size:</label>
+                                            <input type="range" id="emojiSizeSlider" min="12" max="24" value="20" class="slider" title="Double-click to reset">
+                                            <input type="number" id="emojiSizeValue" min="12" max="24" value="20" class="slider-input">
+                                        </div>
+                                        <div class="emoji-mode" id="emojiMode">
+                                            <div class="emoji-toggle active" id="emojiToggle"></div>
+                                            <span class="emoji-label">Noto style</span>
+                                        </div>
                                     </div>
                                     <button class="btn primary" id="generateEmojiBtn">Generate</button>
                                 </div>

@@ -4,6 +4,7 @@ const gridSize = 25;
 let pixels = [];
 let pixelOpacities = new Map();
 let brushMode = true;
+let emojiMode = true;
 let isDrawing = false;
 let drawingState = null;
 let totalActivePixels = 0;
@@ -33,6 +34,9 @@ let currentCategory = 'smileys';
 
 // DOM elements
 const brushToggle = document.getElementById('brushToggle');
+const emojiToggle = document.getElementById('emojiToggle');
+const emojiModes = document.getElementById('emojiMode');
+const emojiSelected = document.querySelector('.selected-emoji-display');
 const opacitySlider = document.getElementById('opacitySlider');
 const opacityValue = document.getElementById('opacityValue');
 const opacityPreview = document.getElementById('opacityPreview');
@@ -460,6 +464,37 @@ function toggleBrushMode() {
     }
 }
 
+// Emoji controls
+function toggleEmojiMode() {
+    emojiMode = !emojiMode;
+    
+    if (emojiMode) {
+        emojiToggle.classList.add('active');
+        emojiSelected.style.fontFamily = '"Noto Emoji", sans-serif';
+        updateEmojiGridFont();
+    } else {
+        emojiToggle.classList.remove('active');
+        emojiSelected.style.fontFamily = 'Arial, sans-serif';
+        updateEmojiGridFont();
+    }
+}
+
+function updateEmojiGridFont() {
+    const emojiOptions = document.querySelectorAll('.emoji-option');
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    
+    const fontFamily = emojiMode ? '"Noto Emoji", sans-serif' : 'Arial, sans-serif';
+    
+    emojiOptions.forEach(option => {
+        option.style.fontFamily = fontFamily;
+    });
+    
+    categoryButtons.forEach(button => {
+        button.style.fontFamily = fontFamily;
+    });
+}
+
+
 function updateOpacity() {
     const value = parseInt(opacitySlider.value);
     brushOpacity = value;
@@ -814,13 +849,25 @@ function generateEmojiPixelArt() {
     ctx.fillRect(0, 0, 25, 25);
     
     // Set font for emoji
-    ctx.font = `${fontSize}px Arial, sans-serif`;
+    if (emojiMode === true) {
+        ctx.font = `${fontSize}px "Noto Emoji", sans-serif`;
+    } else {
+        ctx.font = `${fontSize}px Arial, sans-serif`;
+    }
+
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    // Draw emoji - adjusted vertical position to center better
-    ctx.fillText(selectedEmoji, 12.5, 13.5);
+    // Measure text
+    const metrics = ctx.measureText(selectedEmoji);
+    const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+        
+    // Center position
+    const centerY = (25 - textHeight) / 2 + metrics.actualBoundingBoxAscent;
+        
+    // Draw text
+    ctx.fillText(selectedEmoji, 12.5, centerY);
     
     // Process the canvas as an image (will be inverted)
     processCanvasAsImage(canvas);
@@ -1011,6 +1058,9 @@ function populateEmojiGrid(category) {
         button.className = 'emoji-option';
         button.textContent = emoji;
         button.dataset.emoji = emoji;
+        
+        button.style.fontFamily = emojiMode ? '"Noto Emoji", sans-serif' : 'Arial, sans-serif';
+        
         button.addEventListener('click', (e) => selectEmoji(e, emoji));
         emojiGrid.appendChild(button);
     });
@@ -1025,9 +1075,10 @@ function selectEmoji(e, emoji) {
     // Add selected class to clicked option
     e.target.classList.add('selected');
     
-    // Update selected emoji
     selectedEmoji = emoji;
     selectedEmojiDisplay.textContent = emoji;
+    
+    selectedEmojiDisplay.style.fontFamily = emojiMode ? '"Noto Emoji", sans-serif' : 'Arial, sans-serif';
 }
 
 function handleCategoryChange() {
@@ -1171,6 +1222,7 @@ function initCollapsibleControls() {
 
 // Event listeners
 brushToggle.addEventListener('click', toggleBrushMode);
+emojiModes.addEventListener('click', toggleEmojiMode);
 uploadBtn.addEventListener('click', () => imageUpload.click());
 pasteBtn.addEventListener('click', pasteFromClipboard);
 textBtn.addEventListener('click', showTextModal);
