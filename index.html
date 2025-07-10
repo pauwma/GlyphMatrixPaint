@@ -14,7 +14,7 @@
             <p>By <a href="https://privacidad.me/@pauwma">Pauwma</a></p>
         </div>
 
-        <!-- History Controls -->
+        <!-- History Controls
         <div class="history-controls">
             <button class="btn history-btn" id="undoBtn">
                 <i data-feather="arrow-left" class="btn-icon"></i>
@@ -24,7 +24,7 @@
                 <i data-feather="arrow-right" class="btn-icon"></i>
                 Redo
             </button>
-        </div>
+        </div>-->
 
         <div class="main-content">
             <div class="grid-section">
@@ -37,9 +37,21 @@
             </div>
 
             <div class="controls">
+
+                <div class="history-controls">
+                    <button class="btn history-btn" id="undoBtn">
+                        <i data-feather="arrow-left" class="btn-icon"></i>
+                        Undo
+                    </button>
+                    <button class="btn history-btn" id="redoBtn">
+                        <i data-feather="arrow-right" class="btn-icon"></i>
+                        Redo
+                    </button>
+                </div>
+
                 <div class="control-section">
                     <div class="control-header">
-                        <h3>Brush Mode</h3>
+                        <h3>Brush</h3>
                     </div>
                     <div class="control-content">
                         <div class="brush-mode">
@@ -56,13 +68,12 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="control-section">
                     <div class="control-header">
                         <h3>Actions</h3>
                     </div>
                     <div class="control-content">
-                        <!-- Top row: Fill, Clear, Invert -->
                         <div class="action-row">
                             <button class="btn primary action-btn" id="fillBtn">
                                 <i data-feather="droplet" class="btn-icon"></i>
@@ -76,12 +87,7 @@
                                 <i data-feather="repeat" class="btn-icon"></i>
                                 Invert
                             </button>
-                        </div>
-                        
-                        <!-- Middle row: Flip buttons -->
-                        <div class="action-row">
                             <button class="btn action-btn" id="flipHBtn">
-                                <!--<span class="btn-icon">⇄</span>-->
                                 <i data-feather="columns" class="btn-icon"></i>
                                 Mirror
                             </button>
@@ -91,7 +97,7 @@
                             </button>
                             <button class="btn action-btn" id="rotateBtn">
                                 <i data-feather="rotate-cw" class="btn-icon"></i>
-                                Rotate
+                                Rotate 
                             </button>
                         </div>
                         
