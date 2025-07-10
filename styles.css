@@ -91,7 +91,7 @@ body {
     letter-spacing: 0.1em;
 }
 
-/* ---------- Hyperlink --------- */
+/* ? ---- INI - HYPERLINK --- */
 a {
     color: inherit;
     text-decoration: underline;
@@ -99,7 +99,7 @@ a {
 
 a:visited { color: inherit; } 
 a:hover   { opacity: .8; }
-/* ------------------------------- */
+/* ? ---- END - HYPERLINK ---- */
 /* ---------- END - TOP ---------- */
 
 /* ---------- INI - GRID ---------- */
@@ -429,6 +429,17 @@ a:hover   { opacity: .8; }
     border: 1px solid #333;
     border-radius: 2px;
     margin-left: 10px;
+}
+
+@media (max-width: 768px) {
+    .brush-mode {
+        margin-top: 5px;
+        margin-bottom: 15px;
+    }
+
+    .brush-opacity {
+        padding-top: 15px;
+    }
 }
 /*---------- END - BRUSH MODE ----------*/
 
