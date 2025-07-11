@@ -145,7 +145,7 @@ a:hover   { opacity: .8; }
     width: 24px;
     height: 24px;
     background: #000;
-    /*border: 0px solid #222;*/
+    border-radius: 20%;
     cursor: crosshair;
     transition: all 0.1s ease;
     position: relative;
