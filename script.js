@@ -1957,7 +1957,8 @@ async function processGifToFrames() {
 
         // Replace current animation
         frames.length = 0;
-        currentFrameIndex = 0;
+        currentFrameIndex = -1; // Set to invalid index to prevent save during loadFrame
+        pixelOpacities.clear(); // Clear current pixels to prevent overwriting imported frames
 
         optimizedFrames.forEach(frameData => {
             const newFrame = {
