@@ -321,10 +321,6 @@ a:hover   { opacity: .8; }
     outline: none;
 }
 
-.btn:last-child {
-    margin-bottom: 0;
-}
-
 .btn:hover {
     background: #fff;
     color: #000;
