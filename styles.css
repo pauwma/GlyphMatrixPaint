@@ -69,56 +69,38 @@ body {
 /* ---------- INI - TOP ---------- */
 .header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
     border-bottom: 1px solid #333;
     width: 100%;
     max-width: 800px;
-    padding-bottom: 20px;
-    transition: all 0.3s ease;
+    padding-bottom: 15px;
+    position: relative;
 }
 
-.header.collapsed {
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: none;
-}
-
-.header.collapsed .header-content {
-    display: none;
-}
-
-.header-toggle {
+.header-close {
+    position: absolute;
+    top: 0;
+    right: 0;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 8px;
+    padding: 6px;
     border-radius: 4px;
     transition: background-color 0.2s ease;
     -webkit-tap-highlight-color: transparent;
-    width: 40px;
-    height: 40px;
-    margin: 0 auto;
+    width: 32px;
+    height: 32px;
 }
 
-.header-toggle:hover {
+.header-close:hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-.header-chevron {
-    width: 20px;
-    height: 20px;
+.close-icon {
+    width: 18px;
+    height: 18px;
     color: #999;
-    transition: transform 0.3s ease;
-}
-
-.header.collapsed .header-chevron {
-    transform: rotate(180deg);
-}
-
-.header-content {
-    transition: all 0.3s ease;
-    overflow: hidden;
 }
 
 .header h1 {
@@ -131,12 +113,12 @@ body {
 
 .header .main-title {
     font-family: NType82, sans-serif;
-    font-size: 2.5rem;
-    line-height: 2.2rem;
+    font-size: 2rem;
+    line-height: 1.8rem;
     font-weight: 100;
     letter-spacing: 0.1rem;
     word-spacing: 0.4rem;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
 }
 
 .header p {
@@ -667,11 +649,17 @@ a:hover   { opacity: .8; }
     }
 
     .header {
-        padding: 0 5px 15px 5px;
+        padding: 0 5px 10px 5px;
+        margin-bottom: 15px;
     }
 
     .header h1 {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
+    }
+
+    .header .main-title {
+        font-size: 1.6rem;
+        line-height: 1.4rem;
     }
 
     .controls {
@@ -705,11 +693,17 @@ a:hover   { opacity: .8; }
     }
 
     .header {
-        padding: 0 3px 12px 3px;
+        padding: 0 3px 8px 3px;
+        margin-bottom: 12px;
     }
 
     .header h1 {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
+    }
+
+    .header .main-title {
+        font-size: 1.4rem;
+        line-height: 1.2rem;
     }
 }
 
@@ -735,16 +729,17 @@ a:hover   { opacity: .8; }
     }
 
     .header {
-        padding: 0 2px 10px 2px;
+        padding: 0 2px 6px 2px;
+        margin-bottom: 8px;
     }
 
     .header h1 {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
     }
 
     .header .main-title {
-        font-size: 1.4rem;
-        line-height: 1.2rem;
+        font-size: 1.2rem;
+        line-height: 1rem;
     }
 }
 
@@ -991,6 +986,42 @@ a:hover   { opacity: .8; }
 
 .input-group .slider-group {
     margin-bottom: 0;
+}
+
+.checkbox-input {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #333;
+    border-radius: 4px;
+    background: #000;
+    cursor: pointer;
+    position: relative;
+    margin-right: 8px;
+}
+
+.checkbox-input:checked {
+    background: #fff;
+    border-color: #fff;
+}
+
+.checkbox-input:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #000;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.checkbox-label {
+    font-size: 0.75rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
 }
 
 /* ---------- INI - EMOJIS ----------*/
@@ -1479,9 +1510,11 @@ a:hover   { opacity: .8; }
     border: 1px solid #333;
     background: #111;
     scroll-behavior: smooth;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
     scrollbar-color: #666 #111;
 }
 
@@ -1669,3 +1702,273 @@ a:hover   { opacity: .8; }
     
 }
 /*---------- END - ANIMATION ----------*/
+
+
+/*---------- INI - GIF IMPORT ----------*/
+.jsgif {
+    display: none;
+}
+
+.gif-preview {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    background: #111;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .gif-preview {
+        padding: 8px;
+        margin-bottom: 10px;
+    }
+    
+    #gifModal .modal-content {
+        width: 90%;
+        max-width: 350px;
+        margin: 10px auto;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+    }
+    
+    #gifModal .modal-body {
+        padding: 15px;
+    }
+    
+    #gifModal .input-group {
+        margin-bottom: 10px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    #gifModal .input-group label {
+        min-width: 70px;
+        flex-shrink: 0;
+        font-size: 0.9rem;
+        display: inline-block;
+        margin-bottom: 0;
+        margin-top: 0;
+    }
+    
+    #gifModal .input-group .slider {
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    #gifModal .input-group .slider-input {
+        width: 50px;
+        min-width: 50px;
+    }
+    
+    #gifModal .slider-group {
+        margin-bottom: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    #gifModal .modal-content {
+        width: 85%;
+        max-width: 320px;
+        margin: 5px auto;
+        max-height: 75vh;
+        box-sizing: border-box;
+        position: relative;
+    }
+    
+    #gifModal .modal-body {
+        padding: 10px;
+        box-sizing: border-box;
+    }
+    
+    #gifModal .input-group {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    #gifModal .input-group label {
+        min-width: 60px;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+        display: inline-block;
+        margin-bottom: 0;
+        margin-top: 0;
+    }
+    
+    #gifModal .input-group .slider {
+        flex: 1;
+        min-width: 140px;
+    }
+    
+    #gifModal .input-group .slider-input {
+        width: 40px;
+        min-width: 40px;
+        font-size: 0.8rem;
+    }
+    
+    #gifModal .modal-header h3 {
+        font-size: 1rem;
+    }
+    
+    #gifModal .slider-input {
+        width: 35px;
+        min-width: 35px;
+        font-size: 0.8rem;
+        padding: 2px 1px;
+    }
+    
+    #gifModal .slider {
+        flex: 1;
+        min-width: 160px;
+        width: auto;
+    }
+    
+    #gifModal .slider-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+    }
+    
+    #gifModal .slider-label {
+        min-width: 50px;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+    }
+    
+    .gif-progress {
+        margin-top: 8px;
+    }
+    
+    #gifModal.text-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+    }
+}
+
+.gif-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.gif-progress {
+    margin-top: 15px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #f44336;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    color: #999;
+    display: block;
+    text-align: center;
+}
+
+/* GIF Modal Desktop Layout */
+@media (min-width: 769px) {
+    #gifModal .input-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    #gifModal .input-group label {
+        min-width: 80px;
+        flex-shrink: 0;
+        display: inline-block;
+        margin-bottom: 0;
+        margin-top: 0;
+    }
+
+    #gifModal .input-group .slider {
+        flex: 1;
+        min-width: 150px;
+    }
+
+    #gifModal .input-group .slider-input {
+        width: 60px;
+        min-width: 60px;
+    }
+}
+/*---------- END - GIF IMPORT ----------*/
+
+
+/*---------- INI - DANGER MODAL ----------*/
+.danger-icon {
+    color: #f44336;
+    margin-right: 8px;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+}
+
+.danger-text {
+    color: #f44336;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.danger-subtext {
+    color: #999;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.danger-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.danger-buttons .btn {
+    width: 120px;
+    padding: 10px 15px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.danger-buttons .btn.danger {
+    background: #f44336;
+    border-color: #f44336;
+}
+
+.danger-buttons .btn.danger:hover {
+    background: #d32f2f;
+    border-color: #d32f2f;
+}
+/*---------- END - DANGER MODAL ----------*/

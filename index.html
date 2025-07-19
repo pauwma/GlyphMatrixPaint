@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/buzzfeed/libgif-js@master/libgif.js"></script>
 
     <link rel="apple-touch-icon" sizes="180x180" href="img/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon/favicon-32x32.png">
@@ -19,9 +20,9 @@
 </head>
 <body>
     <div class="container">
-        <div class="header collapsible-header">
-            <div class="header-toggle" id="headerToggle">
-                <i data-feather="chevron-down" class="header-chevron"></i>
+        <div class="header" id="header">
+            <div class="header-close" id="headerClose">
+                <i data-feather="x" class="close-icon"></i>
             </div>
             <div class="header-content">
                 <h1 class="main-title">Glyph Matrix Editor</h1>
@@ -179,11 +180,17 @@
                             </button>
                         </div>
 
-                        <!-- Third row: Import Raw Data (full width) -->
-                        <button class="btn" id="binaryBtn">
+                        <div class="action-row two">
+                            <input type="file" id="gifUpload" accept=".gif" style="display: none;">
+                            <button class="btn action-btn" id="gifBtn">
+                                    <i data-feather="film" class="btn-icon"></i>
+                                GIF
+                            </button>
+                            <button class="btn action-btn" id="binaryBtn">
                                 <i data-feather="file-text" class="btn-icon"></i>
-                            Import Raw Data
-                        </button>
+                                Raw Data
+                            </button>
+                        </div>
                         
                         <!-- Text Input Modal -->
                         <div class="text-modal" id="textModal" style="display: none;">
@@ -261,6 +268,69 @@
                                         </div>
                                     </div>
                                     <button class="btn primary" id="generateEmojiBtn">Generate</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GIF Import Modal -->
+                        <div class="text-modal" id="gifModal" style="display: none;">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3>Import GIF Animation</h3>
+                                    <button class="modal-close" id="closeGifModal">×</button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="gif-preview" id="gifPreview">
+                                        <div class="gif-info">
+                                            <span id="gifFrameCount">0 frames</span>
+                                            <span id="gifDimensions">0x0</span>
+                                        </div>
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Brightness:</label>
+                                        <input type="range" id="gifBrightnessSlider" min="-100" max="100" value="0" class="slider" title="Double-click to reset">
+                                        <input type="number" id="gifBrightnessValue" min="-100" max="100" value="0" class="slider-input">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Contrast:</label>
+                                        <input type="range" id="gifContrastSlider" min="0" max="200" value="100" class="slider" title="Double-click to reset">
+                                        <input type="number" id="gifContrastValue" min="0" max="200" value="100" class="slider-input">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Threshold:</label>
+                                        <input type="range" id="gifThresholdSlider" min="0" max="255" value="128" class="slider" title="Double-click to reset">
+                                        <input type="number" id="gifThresholdValue" min="0" max="255" value="128" class="slider-input">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Invert Colors:</label>
+                                        <input type="checkbox" id="gifInvertColors" class="checkbox-input">
+                                        <span class="checkbox-label">Invert</span>
+                                    </div>
+                                    <button class="btn primary" id="processGifBtn">Process GIF</button>
+                                    <div class="gif-progress" id="gifProgress" style="display: none;">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" id="gifProgressFill"></div>
+                                        </div>
+                                        <span class="progress-text" id="gifProgressText">Processing frames...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delete All Frames Confirmation Modal -->
+                        <div class="text-modal danger-modal" id="deleteAllModal" style="display: none;">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h3><i data-feather="alert-triangle" class="danger-icon"></i> Delete All Frames</h3>
+                                    <button class="modal-close" id="closeDeleteAllModal">×</button>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="danger-text">Are you sure you want to delete <strong>ALL frames</strong>?</p>
+                                    <p class="danger-subtext">This action cannot be undone and will reset your animation to a single empty frame.</p>
+                                    <div class="danger-buttons">
+                                        <button class="btn" id="cancelDeleteAllBtn">Cancel</button>
+                                        <button class="btn danger" id="confirmDeleteAllBtn">Delete All</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

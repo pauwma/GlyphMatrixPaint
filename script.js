@@ -11,6 +11,8 @@ let totalActivePixels = 0;
 let uploadedImage = null;
 let imageCanvas = null;
 let imageContext = null;
+let currentGifData = null;
+let gifFrames = [];
 let brushOpacity = 255;
 
 // Animation variables
@@ -49,6 +51,8 @@ const pasteBtn = document.getElementById('pasteBtn');
 const textBtn = document.getElementById('textBtn');
 const emojiBtn = document.getElementById('emojiBtn');
 const binaryBtn = document.getElementById('binaryBtn');
+const gifBtn = document.getElementById('gifBtn');
+const gifUpload = document.getElementById('gifUpload');
 const importControls = document.getElementById('importControls');
 const binaryImportControls = document.getElementById('binaryImportControls');
 const brightnessSlider = document.getElementById('brightnessSlider');
@@ -93,8 +97,28 @@ const applyBinaryBtn = document.getElementById('applyBinaryBtn');
 // Modal elements
 const textModal = document.getElementById('textModal');
 const emojiModal = document.getElementById('emojiModal');
+const gifModal = document.getElementById('gifModal');
 const closeTextModal = document.getElementById('closeTextModal');
 const closeEmojiModal = document.getElementById('closeEmojiModal');
+const closeGifModal = document.getElementById('closeGifModal');
+const gifPreview = document.getElementById('gifPreview');
+const gifFrameCount = document.getElementById('gifFrameCount');
+const gifDimensions = document.getElementById('gifDimensions');
+const processGifBtn = document.getElementById('processGifBtn');
+const gifProgress = document.getElementById('gifProgress');
+const gifProgressFill = document.getElementById('gifProgressFill');
+const gifProgressText = document.getElementById('gifProgressText');
+const gifBrightnessSlider = document.getElementById('gifBrightnessSlider');
+const gifBrightnessValue = document.getElementById('gifBrightnessValue');
+const gifContrastSlider = document.getElementById('gifContrastSlider');
+const gifContrastValue = document.getElementById('gifContrastValue');
+const gifThresholdSlider = document.getElementById('gifThresholdSlider');
+const gifThresholdValue = document.getElementById('gifThresholdValue');
+const gifInvertColors = document.getElementById('gifInvertColors');
+const deleteAllModal = document.getElementById('deleteAllModal');
+const closeDeleteAllModal = document.getElementById('closeDeleteAllModal');
+const cancelDeleteAllBtn = document.getElementById('cancelDeleteAllBtn');
+const confirmDeleteAllBtn = document.getElementById('confirmDeleteAllBtn');
 const textInput = document.getElementById('textInput');
 const fontSizeSlider = document.getElementById('fontSizeSlider');
 const fontSizeValue = document.getElementById('fontSizeValue');
@@ -379,8 +403,10 @@ let touchDraggedFrameIndex = null;
 let isDraggingFrame = false;
 let touchStartTime = 0;
 let touchStartPosition = { x: 0, y: 0 };
-let dragThreshold = 10; // pixels
-let dragDelay = 150; // milliseconds
+let dragThreshold = 15; // pixels - increased for better scroll tolerance
+let dragDelay = 200; // milliseconds - slightly longer delay
+let deleteButtonLongPressTimer = null;
+let deleteButtonLongPressDelay = 1000; // 1 second for long press
 
 // Drag and Drop handlers
 function handleFrameDragStart(e) {
@@ -433,7 +459,7 @@ function handleFrameDrop(e) {
         // Perform the reorder
         reorderFrames(draggedFrameIndex, targetFrameIndex);
         
-        showFeedback(`Frame ${draggedFrameIndex + 1} moved to position ${targetFrameIndex + 1}`, 'success');
+        //showFeedback(`Frame ${draggedFrameIndex + 1} moved to position ${targetFrameIndex + 1}`, 'success');
     }
     
     // Clean up drag styles
@@ -488,7 +514,7 @@ function handleFrameTouchStart(e) {
     touchDraggedFrameIndex = parseInt(frameElement.dataset.frameIndex);
     isDraggingFrame = false; // Don't start dragging immediately
     
-    // Don't prevent default here - let normal tap behavior work initially
+    // Don't prevent default here - let normal tap and scroll behavior work initially
 }
 
 function handleFrameTouchMove(e) {
@@ -500,8 +526,17 @@ function handleFrameTouchMove(e) {
     const deltaY = Math.abs(touch.clientY - touchStartPosition.y);
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
-    // Check if we should start dragging
-    if (!isDraggingFrame && (distance > dragThreshold || currentTime - touchStartTime > dragDelay)) {
+    // Determine movement direction - prioritize horizontal scrolling
+    const isHorizontalMovement = deltaX > deltaY && deltaX > 8;
+    const isVerticalMovement = deltaY > deltaX && deltaY > 15;
+    
+    // If horizontal movement, allow scrolling and don't start dragging
+    if (isHorizontalMovement && !isDraggingFrame) {
+        return; // Let the browser handle horizontal scrolling
+    }
+    
+    // Check if we should start dragging (only on vertical movement or long press)
+    if (!isDraggingFrame && (isVerticalMovement && distance > dragThreshold || currentTime - touchStartTime > dragDelay)) {
         isDraggingFrame = true;
         const frameElement = document.querySelector(`[data-frame-index="${touchDraggedFrameIndex}"]`);
         if (frameElement) {
@@ -567,6 +602,60 @@ function handleFrameTouchEnd(e) {
     isDraggingFrame = false;
 }
 
+// Long press handlers for delete button
+function startDeleteLongPress(e) {
+    // Clear any existing timer
+    if (deleteButtonLongPressTimer) {
+        clearTimeout(deleteButtonLongPressTimer);
+    }
+    
+    // Start long press timer
+    deleteButtonLongPressTimer = setTimeout(() => {
+        // Check if we have more than one frame to delete
+        if (frames.length <= 1) {
+            showFeedback('Cannot delete all frames - need at least one frame', 'error');
+            return;
+        }
+        
+        // Show confirmation modal
+        showDeleteAllModal();
+        
+        // Add visual feedback to button
+        deleteFrameBtn.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            deleteFrameBtn.style.transform = '';
+        }, 100);
+        
+        // Mark that long press was triggered to prevent normal click
+        deleteButtonLongPressTimer = 'triggered';
+        
+    }, deleteButtonLongPressDelay);
+    
+    // Don't prevent default - let normal touch events work
+}
+
+function cancelDeleteLongPress(e) {
+    // Check if long press was triggered
+    const wasTriggered = deleteButtonLongPressTimer === 'triggered';
+    
+    // Clear the timer if it exists
+    if (deleteButtonLongPressTimer && deleteButtonLongPressTimer !== 'triggered') {
+        clearTimeout(deleteButtonLongPressTimer);
+    }
+    
+    // Reset timer
+    deleteButtonLongPressTimer = null;
+    
+    // Reset button style
+    deleteFrameBtn.style.transform = '';
+    
+    // If long press was triggered, prevent the normal click
+    if (wasTriggered && e.type === 'touchend') {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+}
+
 function updateCurrentFrameDuration() {
     frameDuration = Math.max(50, parseInt(durationSlider.value));
     if (currentFrameIndex >= 0 && currentFrameIndex < frames.length) {
@@ -615,7 +704,7 @@ function togglePlayback() {
         updateDisplay();
         updateFramesDisplay();
         
-        showFeedback('Animation stopped', 'success');
+        //showFeedback('Animation stopped', 'success');
     } else {
         // Start animation
         if (frames.length <= 1) {
@@ -1391,6 +1480,57 @@ function hideEmojiModal() {
     // This preserves the selected emoji and category for next time
 }
 
+function showGifModal() {
+    gifModal.style.display = 'flex';
+}
+
+function hideGifModal() {
+    gifModal.style.display = 'none';
+    // Reset GIF data
+    currentGifData = null;
+    gifFrames = [];
+    gifProgress.style.display = 'none';
+    gifProgressFill.style.width = '0%';
+}
+
+function showDeleteAllModal() {
+    deleteAllModal.style.display = 'flex';
+}
+
+function hideDeleteAllModal() {
+    deleteAllModal.style.display = 'none';
+}
+
+function deleteAllFrames() {
+    // Pause animation if playing
+    if (isPlaying) {
+        togglePlayback();
+    }
+    
+    // Reset to a single empty frame
+    frames.length = 0;
+    currentFrameIndex = 0;
+    pixelOpacities.clear();
+    
+    // Create a new empty frame
+    const newFrame = {
+        pixels: new Map(),
+        duration: 100,
+        history: [new Map()],
+        historyIndex: 0
+    };
+    frames.push(newFrame);
+    
+    // Update displays
+    updateFramesDisplay();
+    updateDurationDisplay();
+    updateDisplay();
+    updateHistoryButtons();
+    
+    hideDeleteAllModal();
+    showFeedback('All frames deleted. Started with a fresh empty frame.', 'success');
+}
+
 function generateTextPixelArt() {
     const text = textInput.value.trim();
     if (!text) return;
@@ -1641,6 +1781,296 @@ function applyImageToPixels() {
 
     saveToHistory();
     updateDisplay();
+}
+
+// GIF Import Functions
+async function handleGifUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check if SuperGif library is loaded
+    if (typeof SuperGif === 'undefined') {
+        showFeedback('GIF processing library not loaded. Please refresh the page.', 'error');
+        console.error('SuperGif library not found. Available globals:', Object.keys(window).filter(k => k.toLowerCase().includes('gif')));
+        return;
+    }
+
+    // Check if file is a GIF
+    if (file.type !== 'image/gif') {
+        showFeedback('Please select a valid GIF file', 'error');
+        return;
+    }
+
+    // Check file size (limit to 20MB)
+    if (file.size > 20 * 1024 * 1024) {
+        showFeedback('GIF file is too large (max 20MB)', 'error');
+        return;
+    }
+
+    try {
+        // Create URL for the file
+        const fileUrl = URL.createObjectURL(file);
+        
+        // Create a temporary img element
+        const tempImg = document.createElement('img');
+        tempImg.src = fileUrl;
+        tempImg.style.display = 'none';
+        document.body.appendChild(tempImg);
+
+        // Initialize SuperGif
+        const rub = new SuperGif({
+            gif: tempImg,
+            auto_play: false,
+            show_progress_bar: false
+        });
+
+        rub.load(() => {
+            try {
+                const frameCount = rub.get_length();
+                const canvas = rub.get_canvas();
+                
+                if (frameCount === 0) {
+                    showFeedback('No frames found in GIF', 'error');
+                    cleanup();
+                    return;
+                }
+
+                // Debug: Check available methods
+                console.log('SuperGif methods:', Object.getOwnPropertyNames(rub).filter(name => typeof rub[name] === 'function'));
+
+                // Try to get frame delays from internal data
+                let frameDelays = [];
+                try {
+                    // Access internal frames if available
+                    if (rub.frames && rub.frames.length > 0) {
+                        frameDelays = rub.frames.map(frame => frame.delay || 10);
+                    }
+                } catch (e) {
+                    console.log('Could not access frame delays, using default');
+                }
+
+                // Store GIF data
+                currentGifData = { 
+                    rub: rub, 
+                    frameCount: frameCount,
+                    canvas: canvas,
+                    frameDelays: frameDelays
+                };
+                
+                // Update UI with GIF info
+                gifFrameCount.textContent = `${frameCount} frames`;
+                gifDimensions.textContent = `${canvas.width}x${canvas.height}`;
+                
+                showGifModal();
+                showFeedback('GIF loaded successfully', 'success');
+                
+            } catch (error) {
+                console.error('Error processing GIF:', error);
+                showFeedback('Error processing GIF frames', 'error');
+                cleanup();
+            }
+        });
+
+        function cleanup() {
+            document.body.removeChild(tempImg);
+            URL.revokeObjectURL(fileUrl);
+        }
+        
+    } catch (error) {
+        console.error('Error loading GIF:', error);
+        showFeedback('Error loading GIF file', 'error');
+    }
+
+    // Reset file input
+    event.target.value = '';
+}
+
+async function processGifToFrames() {
+    if (!currentGifData || !currentGifData.rub) {
+        showFeedback('No GIF data to process', 'error');
+        return;
+    }
+
+    // Pause animation if playing
+    pauseAnimationIfPlaying();
+
+    // Show progress
+    gifProgress.style.display = 'block';
+    gifProgressFill.style.width = '0%';
+    gifProgressText.textContent = 'Processing frames...';
+
+    // Get processing settings
+    const brightness = parseInt(gifBrightnessValue.value);
+    const contrast = parseInt(gifContrastValue.value);
+    const threshold = parseInt(gifThresholdValue.value);
+    const invertColors = gifInvertColors.checked;
+
+    try {
+        const processedFrames = [];
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 25;
+        canvas.height = 25;
+        
+        const { rub, frameCount, frameDelays } = currentGifData;
+
+        for (let i = 0; i < frameCount; i++) {
+            const progress = ((i + 1) / frameCount) * 100;
+            
+            // Update progress
+            gifProgressFill.style.width = `${progress}%`;
+            gifProgressText.textContent = `Processing frame ${i + 1}/${frameCount}`;
+
+            // Move to frame
+            rub.move_to(i);
+            
+            // Get frame canvas
+            const frameCanvas = rub.get_canvas();
+            
+            // Get frame delay from stored delays or use default
+            const frameDelay = (frameDelays && frameDelays[i]) ? frameDelays[i] : 10; // Default 10 centiseconds = 100ms
+
+            // Scale and process to 25x25
+            ctx.clearRect(0, 0, 25, 25);
+            ctx.drawImage(frameCanvas, 0, 0, 25, 25);
+
+            // Apply image processing
+            const processedImageData = ctx.getImageData(0, 0, 25, 25);
+            applyImageAdjustments(processedImageData, brightness, contrast, invertColors);
+            ctx.putImageData(processedImageData, 0, 0);
+
+            // Convert to pixel data
+            const finalImageData = ctx.getImageData(0, 0, 25, 25);
+            const framePixels = convertImageDataToPixels(finalImageData.data, threshold);
+            
+            processedFrames.push({
+                pixels: framePixels,
+                duration: frameDelay * 10 || 100 // Convert centiseconds to milliseconds
+            });
+
+            // Allow UI to update
+            await new Promise(resolve => setTimeout(resolve, 1));
+        }
+
+        // Detect and merge duplicate frames
+        const optimizedFrames = mergeConsecutiveDuplicateFrames(processedFrames);
+
+        // Replace current animation
+        frames.length = 0;
+        currentFrameIndex = 0;
+
+        optimizedFrames.forEach(frameData => {
+            const newFrame = {
+                pixels: new Map(frameData.pixels),
+                duration: frameData.duration,
+                history: [new Map(frameData.pixels)],
+                historyIndex: 0
+            };
+            frames.push(newFrame);
+        });
+
+        // Load first frame
+        if (frames.length > 0) {
+            loadFrame(0);
+        }
+
+        hideGifModal();
+        showFeedback(`GIF imported: ${optimizedFrames.length} frames (${frameCount - optimizedFrames.length} duplicates merged)`, 'success');
+
+    } catch (error) {
+        console.error('Error processing GIF:', error);
+        showFeedback('Error processing GIF frames', 'error');
+        gifProgress.style.display = 'none';
+    }
+}
+
+function convertImageDataToPixels(data, threshold) {
+    const pixels = new Map();
+    
+    for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+            const rowWidth = shapePattern[row] || 0;
+            const startCol = Math.floor((gridSize - rowWidth) / 2);
+            const endCol = startCol + rowWidth - 1;
+            
+            if (col >= startCol && col <= endCol) {
+                const pixelIndex = (row * 25 + col) * 4;
+                const r = data[pixelIndex];
+                const g = data[pixelIndex + 1];
+                const b = data[pixelIndex + 2];
+                const a = data[pixelIndex + 3];
+                
+                const brightness = (r * 0.299 + g * 0.587 + b * 0.114) * (a / 255);
+                
+                if (brightness > threshold) {
+                    const pixelId = `${row}-${col}`;
+                    pixels.set(pixelId, Math.round(brightness));
+                }
+            }
+        }
+    }
+    
+    return pixels;
+}
+
+function mergeConsecutiveDuplicateFrames(frames) {
+    if (frames.length <= 1) return frames;
+    
+    const merged = [];
+    let currentFrame = { ...frames[0] };
+    
+    for (let i = 1; i < frames.length; i++) {
+        const nextFrame = frames[i];
+        
+        // Compare pixel maps
+        if (arePixelMapsEqual(currentFrame.pixels, nextFrame.pixels)) {
+            // Merge duration
+            currentFrame.duration += nextFrame.duration;
+        } else {
+            // Different frame, save current and start new
+            merged.push(currentFrame);
+            currentFrame = { ...nextFrame };
+        }
+    }
+    
+    // Add the last frame
+    merged.push(currentFrame);
+    
+    return merged;
+}
+
+function arePixelMapsEqual(map1, map2) {
+    if (map1.size !== map2.size) return false;
+    
+    for (let [key, value] of map1) {
+        if (map2.get(key) !== value) return false;
+    }
+    
+    return true;
+}
+
+function applyImageAdjustments(imageData, brightness, contrast, invert = false) {
+    const data = imageData.data;
+    const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+    
+    for (let i = 0; i < data.length; i += 4) {
+        // Apply invert first if enabled
+        if (invert) {
+            data[i] = 255 - data[i];         // Red
+            data[i + 1] = 255 - data[i + 1]; // Green
+            data[i + 2] = 255 - data[i + 2]; // Blue
+        }
+        
+        // Apply contrast
+        data[i] = Math.max(0, Math.min(255, factor * (data[i] - 128) + 128));
+        data[i + 1] = Math.max(0, Math.min(255, factor * (data[i + 1] - 128) + 128));
+        data[i + 2] = Math.max(0, Math.min(255, factor * (data[i + 2] - 128) + 128));
+        
+        // Apply brightness
+        data[i] = Math.max(0, Math.min(255, data[i] + brightness));
+        data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + brightness));
+        data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + brightness));
+    }
 }
 
 // Emoji functions
@@ -1922,18 +2352,13 @@ async function exportAsGif() {
     }
 }
 
-// Header toggle functionality
-function initHeaderToggle() {
-    const headerToggle = document.getElementById('headerToggle');
+// Header close functionality
+function initHeaderClose() {
+    const headerClose = document.getElementById('headerClose');
     const header = document.querySelector('.header');
     
-    headerToggle.addEventListener('click', () => {
-        header.classList.toggle('collapsed');
-        
-        // Update the feather icon after the toggle
-        setTimeout(() => {
-            feather.replace();
-        }, 50);
+    headerClose.addEventListener('click', () => {
+        header.style.display = 'none';
     });
 }
 
@@ -1978,6 +2403,8 @@ flipVBtn.addEventListener('click', flipVertical);
 rotateBtn.addEventListener('click', rotate90);
 copyBtn.addEventListener('click', copyToClipboard);
 binaryBtn.addEventListener('click', toggleBinaryImport);
+gifBtn.addEventListener('click', () => gifUpload.click());
+gifUpload.addEventListener('change', handleGifUpload);
 downloadBtn.addEventListener('click', downloadAsImage);
 exportGifBtn.addEventListener('click', exportAsGif);
 
@@ -1985,6 +2412,15 @@ exportGifBtn.addEventListener('click', exportAsGif);
 newFrameBtn.addEventListener('click', createNewFrame);
 duplicateFrameBtn.addEventListener('click', duplicateCurrentFrame);
 deleteFrameBtn.addEventListener('click', deleteCurrentFrame);
+
+// Long press for delete all frames
+deleteFrameBtn.addEventListener('mousedown', startDeleteLongPress);
+deleteFrameBtn.addEventListener('mouseup', cancelDeleteLongPress);
+deleteFrameBtn.addEventListener('mouseleave', cancelDeleteLongPress);
+deleteFrameBtn.addEventListener('touchstart', startDeleteLongPress, { passive: false });
+deleteFrameBtn.addEventListener('touchend', cancelDeleteLongPress, { passive: false });
+deleteFrameBtn.addEventListener('touchcancel', cancelDeleteLongPress, { passive: false });
+
 playBtn.addEventListener('click', togglePlayback);
 durationSlider.addEventListener('input', updateCurrentFrameDuration);
 
@@ -2013,6 +2449,34 @@ durationSlider.addEventListener('click', (e) => {
 durationValue.addEventListener('input', updateDurationFromInput);
 durationValue.addEventListener('change', updateDurationFromInput);
 
+// GIF modal slider synchronization
+if (gifBrightnessSlider && gifBrightnessValue) {
+    gifBrightnessSlider.addEventListener('input', () => {
+        gifBrightnessValue.value = gifBrightnessSlider.value;
+    });
+    gifBrightnessValue.addEventListener('input', () => {
+        gifBrightnessSlider.value = gifBrightnessValue.value;
+    });
+}
+
+if (gifContrastSlider && gifContrastValue) {
+    gifContrastSlider.addEventListener('input', () => {
+        gifContrastValue.value = gifContrastSlider.value;
+    });
+    gifContrastValue.addEventListener('input', () => {
+        gifContrastSlider.value = gifContrastValue.value;
+    });
+}
+
+if (gifThresholdSlider && gifThresholdValue) {
+    gifThresholdSlider.addEventListener('input', () => {
+        gifThresholdValue.value = gifThresholdSlider.value;
+    });
+    gifThresholdValue.addEventListener('input', () => {
+        gifThresholdSlider.value = gifThresholdValue.value;
+    });
+}
+
 // History event listeners
 if (undoBtn) undoBtn.addEventListener('click', undo);
 if (redoBtn) redoBtn.addEventListener('click', redo);
@@ -2023,8 +2487,13 @@ if (applyBinaryBtn) applyBinaryBtn.addEventListener('click', applyBinaryData);
 // Modal event listeners
 closeTextModal.addEventListener('click', hideTextModal);
 closeEmojiModal.addEventListener('click', hideEmojiModal);
+closeGifModal.addEventListener('click', hideGifModal);
+closeDeleteAllModal.addEventListener('click', hideDeleteAllModal);
+cancelDeleteAllBtn.addEventListener('click', hideDeleteAllModal);
+confirmDeleteAllBtn.addEventListener('click', deleteAllFrames);
 generateTextBtn.addEventListener('click', generateTextPixelArt);
 generateEmojiBtn.addEventListener('click', generateEmojiPixelArt);
+processGifBtn.addEventListener('click', processGifToFrames);
 
 // Close modals when clicking outside
 textModal.addEventListener('click', (e) => {
@@ -2035,11 +2504,21 @@ emojiModal.addEventListener('click', (e) => {
     if (e.target === emojiModal) hideEmojiModal();
 });
 
+gifModal.addEventListener('click', (e) => {
+    if (e.target === gifModal) hideGifModal();
+});
+
+deleteAllModal.addEventListener('click', (e) => {
+    if (e.target === deleteAllModal) hideDeleteAllModal();
+});
+
 // Close modals with Escape key
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         hideTextModal();
         hideEmojiModal();
+        hideGifModal();
+        hideDeleteAllModal();
     }
 });
 
@@ -2053,7 +2532,7 @@ document.addEventListener('DOMContentLoaded', () => {
     createImageCanvas();
     initCollapsibleControls();
     initFramesScrolling();
-    initHeaderToggle();
+    initHeaderClose();
     
     // Initialize emoji functionality
     populateEmojiGrid('smileys');
