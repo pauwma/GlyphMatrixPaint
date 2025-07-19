@@ -13,9 +13,12 @@ let imageCanvas = null;
 let imageContext = null;
 let brushOpacity = 255;
 
-// History management
-let history = [];
-let historyIndex = -1;
+// Animation variables
+let frames = [];
+let currentFrameIndex = 0;
+let isPlaying = false;
+let animationInterval = null;
+let frameDuration = 100; // Default duration in ms
 let maxHistorySize = 50;
 let currentDrawingSession = null;
 
@@ -61,7 +64,6 @@ const flipVBtn = document.getElementById('flipVBtn');
 const rotateBtn = document.getElementById('rotateBtn');
 const copyBtn = document.getElementById('copyBtn');
 const copyFeedback = document.getElementById('copyFeedback');
-const binaryOutput = document.getElementById('binaryOutput');
 const activeCount = document.getElementById('activeCount');
 const totalPixelsCount = document.getElementById('totalPixels');
 const emojiGrid = document.getElementById('emojiGrid');
@@ -69,6 +71,16 @@ const emojiSearch = document.getElementById('emojiSearch');
 const categoryBtns = document.querySelectorAll('.category-btn');
 const selectedEmojiDisplay = document.querySelector('.selected-emoji-display');
 const downloadBtn = document.getElementById('downloadBtn');
+const exportGifBtn = document.getElementById('exportGifBtn');
+
+// Animation DOM elements
+const newFrameBtn = document.getElementById('newFrameBtn');
+const duplicateFrameBtn = document.getElementById('duplicateFrameBtn');
+const deleteFrameBtn = document.getElementById('deleteFrameBtn');
+const playBtn = document.getElementById('playBtn');
+const framesContainer = document.getElementById('framesContainer');
+const durationSlider = document.getElementById('durationSlider');
+const durationValue = document.getElementById('durationValue');
 
 // History controls
 const undoBtn = document.getElementById('undoBtn');
@@ -123,58 +135,619 @@ const emojiData = {
     ]
 };
 
-// History management functions
-function saveToHistory() {
-    // Remove any future history if we're not at the end
-    if (historyIndex < history.length - 1) {
-        history = history.slice(0, historyIndex + 1);
+// Helper function to pause animation if playing
+function pauseAnimationIfPlaying() {
+    if (isPlaying) {
+        togglePlayback();
     }
+}
+
+// Animation functions
+function initializeAnimation() {
+    // Create first frame with current state and its own history
+    const initialFrame = {
+        pixels: new Map(pixelOpacities),
+        duration: 100,
+        history: [],
+        historyIndex: -1
+    };
     
-    // Add current state to history
-    const currentState = new Map(pixelOpacities);
-    history.push(currentState);
+    // Initialize the frame's history with empty state
+    initialFrame.history.push(new Map());
+    initialFrame.historyIndex = 0;
     
-    // Limit history size
-    if (history.length > maxHistorySize) {
-        history.shift();
-    } else {
-        historyIndex++;
-    }
-    
+    frames = [initialFrame];
+    currentFrameIndex = 0;
+    updateFramesDisplay();
+    updateDurationDisplay();
     updateHistoryButtons();
 }
 
+function createNewFrame() {
+    // Stop animation if playing
+    if (isPlaying) {
+        togglePlayback();
+    }
+    
+    // Create new frame with empty state
+    const newFrame = {
+        pixels: new Map(),
+        duration: frameDuration,
+        history: [],
+        historyIndex: -1
+    };
+    
+     // Initialize the new frame's history with empty state
+    newFrame.history.push(new Map());
+    newFrame.historyIndex = 0;
+    
+    frames.push(newFrame);
+    currentFrameIndex = frames.length - 1;
+    
+    // Clear current grid and load new frame
+    pixelOpacities.clear();
+    updateDisplay();
+    updateFramesDisplay();
+    updateDurationDisplay();
+    updateHistoryButtons();
+}
+
+function duplicateCurrentFrame() {
+    // Stop animation if playing
+    if (isPlaying) {
+        togglePlayback();
+    }
+    
+    const currentFrame = frames[currentFrameIndex];
+
+    const duplicatedFrame = {
+        pixels: new Map(currentFrame.pixels),
+        duration: currentFrame.duration,
+        history: currentFrame.history.map(historyState => new Map(historyState)), // Deep copy history
+        historyIndex: currentFrame.historyIndex
+    };
+    
+    frames.splice(currentFrameIndex + 1, 0, duplicatedFrame);
+    currentFrameIndex++;
+    
+    updateFramesDisplay();
+    updateDurationDisplay();
+    updateHistoryButtons();
+}
+
+
+function deleteCurrentFrame() {
+    // Stop animation if playing
+    if (isPlaying) {
+        togglePlayback();
+    }
+    
+    if (frames.length <= 1) {
+        showFeedback('Cannot delete the last frame', 'error');
+        return;
+    }
+    
+    // Guardar el índice antes de eliminar
+    const frameToDelete = currentFrameIndex;
+    
+    // Save current frame state before deletion (to preserve any unsaved changes)
+    if (frameToDelete >= 0 && frameToDelete < frames.length) {
+        frames[frameToDelete].pixels = new Map(pixelOpacities);
+    }
+    
+    // Eliminar el frame actual
+    frames.splice(frameToDelete, 1);
+    
+    // Ajustar el índice: siempre ir al frame anterior si es posible
+    if (frameToDelete > 0) {
+        currentFrameIndex = frameToDelete - 1;
+    } else {
+        // Si eliminamos el primer frame, quedarnos en 0 (que ahora es el siguiente frame)
+        currentFrameIndex = 0;
+    }
+    
+    // Load the target frame directly without using loadFrame to avoid state collision
+    const targetFrame = frames[currentFrameIndex];
+    pixelOpacities = new Map(targetFrame.pixels);
+    frameDuration = targetFrame.duration;
+    
+    updateDisplay();
+    updateFramesDisplay();
+    updateDurationDisplay();
+    updateHistoryButtons();
+    
+    showFeedback('Frame deleted', 'success');
+}
+
+function loadFrame(frameIndex) {
+    if (frameIndex < 0 || frameIndex >= frames.length) return;
+    
+    // Save current frame state before switching
+    if (currentFrameIndex >= 0 && currentFrameIndex < frames.length) {
+        frames[currentFrameIndex].pixels = new Map(pixelOpacities);
+    }
+    
+    currentFrameIndex = frameIndex;
+    const currentFrame = frames[frameIndex];
+    
+    // Load the frame's pixels and duration
+    pixelOpacities = new Map(currentFrame.pixels);
+    frameDuration = currentFrame.duration;
+    
+    updateDisplay();
+    updateDurationDisplay();
+    updateFramesDisplay();
+    updateHistoryButtons();
+}
+
+function saveCurrentFrame() {
+    if (currentFrameIndex >= 0 && currentFrameIndex < frames.length) {
+        frames[currentFrameIndex].pixels = new Map(pixelOpacities);
+        frames[currentFrameIndex].duration = frameDuration;
+        updateFramesDisplay();
+    }
+}
+
+function updateFramesDisplay() {
+    framesContainer.innerHTML = '';
+    
+    frames.forEach((frame, index) => {
+        const frameElement = document.createElement('div');
+        frameElement.className = `frame-preview ${index === currentFrameIndex ? 'active' : ''}`;
+        frameElement.dataset.frameIndex = index;
+        frameElement.draggable = true;
+        
+        // Add drag event listeners
+        frameElement.addEventListener('dragstart', handleFrameDragStart);
+        frameElement.addEventListener('dragover', handleFrameDragOver);
+        frameElement.addEventListener('drop', handleFrameDrop);
+        frameElement.addEventListener('dragend', handleFrameDragEnd);
+        frameElement.addEventListener('dragenter', handleFrameDragEnter);
+        frameElement.addEventListener('dragleave', handleFrameDragLeave);
+        
+        // Add touch event listeners for mobile
+        frameElement.addEventListener('touchstart', handleFrameTouchStart, { passive: false });
+        frameElement.addEventListener('touchmove', handleFrameTouchMove, { passive: false });
+        frameElement.addEventListener('touchend', handleFrameTouchEnd, { passive: false });
+        
+        // Create mini grid
+        const miniGrid = document.createElement('div');
+        miniGrid.className = 'frame-mini-grid';
+        
+        for (let row = 0; row < gridSize; row++) {
+            for (let col = 0; col < gridSize; col++) {
+                const miniPixel = document.createElement('div');
+                miniPixel.className = 'frame-mini-pixel';
+                
+                const rowWidth = shapePattern[row] || 0;
+                const startCol = Math.floor((gridSize - rowWidth) / 2);
+                const endCol = startCol + rowWidth - 1;
+                
+                if (col >= startCol && col <= endCol) {
+                    const pixelId = `${row}-${col}`;
+                    const opacity = frame.pixels.get(pixelId) || 0;
+                    
+                    if (opacity > 0) {
+                        miniPixel.classList.add('active');
+                        const grayValue = Math.round(opacity);
+                        miniPixel.style.backgroundColor = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+                    }
+                } else {
+                    miniPixel.classList.add('inactive');
+                }
+                
+                miniGrid.appendChild(miniPixel);
+            }
+        }
+        
+        // Add frame number
+        const frameNumber = document.createElement('div');
+        frameNumber.className = 'frame-number';
+        frameNumber.textContent = index + 1;
+        
+        // Add duration bar
+        const durationBar = document.createElement('div');
+        durationBar.className = 'frame-duration-bar';
+        const durationPercent = (frame.duration / 1000) * 100;
+        durationBar.style.width = `${Math.min(100, durationPercent)}%`;
+        
+        frameElement.appendChild(miniGrid);
+        frameElement.appendChild(frameNumber);
+        frameElement.appendChild(durationBar);
+        
+        // Add click event
+        frameElement.addEventListener('click', () => {
+            if (isPlaying) {
+                togglePlayback();
+            }
+            saveCurrentFrame();
+            loadFrame(index);
+        });
+        
+        framesContainer.appendChild(frameElement);
+    });
+}
+
+function updateDurationDisplay() {
+    durationSlider.value = frameDuration;
+    durationValue.value = frameDuration;
+}
+
+// Drag and Drop variables
+let draggedFrameIndex = null;
+let touchDraggedFrameIndex = null;
+let isDraggingFrame = false;
+let touchStartTime = 0;
+let touchStartPosition = { x: 0, y: 0 };
+let dragThreshold = 10; // pixels
+let dragDelay = 150; // milliseconds
+
+// Drag and Drop handlers
+function handleFrameDragStart(e) {
+    const frameElement = e.target.closest('.frame-preview');
+    if (!frameElement) return;
+    
+    draggedFrameIndex = parseInt(frameElement.dataset.frameIndex);
+    frameElement.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', frameElement.outerHTML);
+}
+
+function handleFrameDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleFrameDragEnter(e) {
+    e.preventDefault();
+    const frameElement = e.target.closest('.frame-preview');
+    if (frameElement) {
+        frameElement.classList.add('drag-over');
+    }
+}
+
+function handleFrameDragLeave(e) {
+    const frameElement = e.target.closest('.frame-preview');
+    if (frameElement) {
+        frameElement.classList.remove('drag-over');
+    }
+}
+
+function handleFrameDrop(e) {
+    e.preventDefault();
+    
+    const frameElement = e.target.closest('.frame-preview');
+    if (!frameElement) return;
+    
+    const targetFrameIndex = parseInt(frameElement.dataset.frameIndex);
+    
+    if (draggedFrameIndex !== null && draggedFrameIndex !== targetFrameIndex) {
+        // Pause animation if playing
+        if (isPlaying) {
+            togglePlayback();
+        }
+        
+        // Save current frame state before reordering
+        saveCurrentFrame();
+        
+        // Perform the reorder
+        reorderFrames(draggedFrameIndex, targetFrameIndex);
+        
+        showFeedback(`Frame ${draggedFrameIndex + 1} moved to position ${targetFrameIndex + 1}`, 'success');
+    }
+    
+    // Clean up drag styles
+    document.querySelectorAll('.frame-preview').forEach(frame => {
+        frame.classList.remove('drag-over', 'dragging');
+    });
+}
+
+function handleFrameDragEnd(e) {
+    const frameElement = e.target.closest('.frame-preview');
+    if (frameElement) {
+        frameElement.classList.remove('dragging');
+    }
+    document.querySelectorAll('.frame-preview').forEach(frame => {
+        frame.classList.remove('drag-over');
+    });
+    draggedFrameIndex = null;
+}
+
+function reorderFrames(fromIndex, toIndex) {
+    // Remove the frame from its original position
+    const [movedFrame] = frames.splice(fromIndex, 1);
+    
+    // Insert it at the new position
+    frames.splice(toIndex, 0, movedFrame);
+    
+    // Update currentFrameIndex to follow the moved frame
+    if (currentFrameIndex === fromIndex) {
+        // The current frame was moved
+        currentFrameIndex = toIndex;
+    } else if (fromIndex < currentFrameIndex && toIndex >= currentFrameIndex) {
+        // Frame moved from before current to after/at current
+        currentFrameIndex--;
+    } else if (fromIndex > currentFrameIndex && toIndex <= currentFrameIndex) {
+        // Frame moved from after current to before/at current
+        currentFrameIndex++;
+    }
+    
+    // Refresh the display
+    updateFramesDisplay();
+    updateDurationDisplay();
+}
+
+// Touch event handlers for mobile frame reordering
+function handleFrameTouchStart(e) {
+    const frameElement = e.target.closest('.frame-preview');
+    if (!frameElement) return;
+    
+    const touch = e.touches[0];
+    touchStartTime = Date.now();
+    touchStartPosition = { x: touch.clientX, y: touch.clientY };
+    touchDraggedFrameIndex = parseInt(frameElement.dataset.frameIndex);
+    isDraggingFrame = false; // Don't start dragging immediately
+    
+    // Don't prevent default here - let normal tap behavior work initially
+}
+
+function handleFrameTouchMove(e) {
+    if (touchDraggedFrameIndex === null) return;
+    
+    const touch = e.touches[0];
+    const currentTime = Date.now();
+    const deltaX = Math.abs(touch.clientX - touchStartPosition.x);
+    const deltaY = Math.abs(touch.clientY - touchStartPosition.y);
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    // Check if we should start dragging
+    if (!isDraggingFrame && (distance > dragThreshold || currentTime - touchStartTime > dragDelay)) {
+        isDraggingFrame = true;
+        const frameElement = document.querySelector(`[data-frame-index="${touchDraggedFrameIndex}"]`);
+        if (frameElement) {
+            frameElement.classList.add('dragging');
+        }
+    }
+    
+    if (!isDraggingFrame) return;
+    
+    e.preventDefault();
+    
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetFrame = elementBelow ? elementBelow.closest('.frame-preview') : null;
+    
+    // Remove drag-over from all frames
+    document.querySelectorAll('.frame-preview').forEach(frame => {
+        frame.classList.remove('drag-over');
+    });
+    
+    // Add drag-over to target frame if valid
+    if (targetFrame && targetFrame.dataset.frameIndex !== touchDraggedFrameIndex.toString()) {
+        targetFrame.classList.add('drag-over');
+    }
+}
+
+function handleFrameTouchEnd(e) {
+    if (touchDraggedFrameIndex === null) return;
+    
+    // If we were dragging, handle the drop
+    if (isDraggingFrame) {
+        e.preventDefault();
+        
+        const touch = e.changedTouches[0];
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        const targetFrame = elementBelow ? elementBelow.closest('.frame-preview') : null;
+        
+        if (targetFrame) {
+            const targetFrameIndex = parseInt(targetFrame.dataset.frameIndex);
+            
+            if (touchDraggedFrameIndex !== targetFrameIndex) {
+                // Pause animation if playing
+                if (isPlaying) {
+                    togglePlayback();
+                }
+                
+                // Save current frame state before reordering
+                saveCurrentFrame();
+                
+                // Perform the reorder
+                reorderFrames(touchDraggedFrameIndex, targetFrameIndex);
+                
+                showFeedback(`Frame ${touchDraggedFrameIndex + 1} moved to position ${targetFrameIndex + 1}`, 'success');
+            }
+        }
+    }
+    
+    // Clean up
+    document.querySelectorAll('.frame-preview').forEach(frame => {
+        frame.classList.remove('drag-over', 'dragging');
+    });
+    
+    touchDraggedFrameIndex = null;
+    isDraggingFrame = false;
+}
+
+function updateCurrentFrameDuration() {
+    frameDuration = Math.max(50, parseInt(durationSlider.value));
+    if (currentFrameIndex >= 0 && currentFrameIndex < frames.length) {
+        frames[currentFrameIndex].duration = frameDuration;
+        updateFramesDisplay();
+    }
+    updateDurationDisplay();
+}
+
+function updateDurationFromInput() {
+    let inputValue = parseInt(durationValue.value);
+    
+    // Clamp the value between min and max
+    inputValue = Math.max(50, Math.min(1000, inputValue));
+    
+    frameDuration = inputValue;
+    if (currentFrameIndex >= 0 && currentFrameIndex < frames.length) {
+        frames[currentFrameIndex].duration = frameDuration;
+        updateFramesDisplay();
+    }
+    
+    // Update both slider and input field to reflect the clamped value
+    durationSlider.value = frameDuration;
+    durationValue.value = frameDuration;
+}
+
+function togglePlayback() {
+    if (isPlaying) {
+        // Stop animation
+        isPlaying = false;
+        if (animationInterval) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+        }
+        
+        // Update play button icon
+        const playIcon = playBtn.querySelector('.btn-icon');
+        if (playIcon) {
+            playIcon.setAttribute('data-feather', 'play');
+            feather.replace();
+        }
+        
+        // Restore the actual current frame state (don't use loadFrame as it might save wrong state)
+        const currentFrame = frames[currentFrameIndex];
+        pixelOpacities = new Map(currentFrame.pixels);
+        updateDisplay();
+        updateFramesDisplay();
+        
+        showFeedback('Animation stopped', 'success');
+    } else {
+        // Start animation
+        if (frames.length <= 1) {
+            showFeedback('Need at least 2 frames to animate', 'error');
+            return;
+        }
+        
+        // Save current frame state before starting animation
+        saveCurrentFrame();
+        
+        isPlaying = true;
+        let animationFrameIndex = 0;
+        
+        // Update play button icon
+        const playIcon = playBtn.querySelector('.btn-icon');
+        if (playIcon) {
+            playIcon.setAttribute('data-feather', 'pause');
+            feather.replace();
+        }
+        
+        function playNextFrame() {
+            if (!isPlaying) return;
+            
+            const frame = frames[animationFrameIndex];
+            // Create a temporary copy to avoid modifying the global state
+            const tempPixelOpacities = new Map(frame.pixels);
+            pixelOpacities = tempPixelOpacities;
+            updateDisplay();
+            
+            // Highlight current frame in timeline
+            document.querySelectorAll('.frame-preview').forEach((el, index) => {
+                el.classList.toggle('active', index === animationFrameIndex);
+            });
+            
+            animationFrameIndex = (animationFrameIndex + 1) % frames.length;
+            
+            if (isPlaying) {
+                animationInterval = setTimeout(playNextFrame, frame.duration);
+            }
+        }
+        
+        playNextFrame();
+        //showFeedback('Animation started', 'success');
+    }
+}
+
+// History management functions
+function saveToHistory() {
+    if (currentFrameIndex < 0 || currentFrameIndex >= frames.length) return;
+    
+    const currentFrame = frames[currentFrameIndex];
+    
+    // Remove any future history if we're not at the end
+    if (currentFrame.historyIndex < currentFrame.history.length - 1) {
+        currentFrame.history = currentFrame.history.slice(0, currentFrame.historyIndex + 1);
+    }
+    
+    // Add current state to frame's history
+    const currentState = new Map(pixelOpacities);
+    currentFrame.history.push(currentState);
+    
+    // Limit history size
+    if (currentFrame.history.length > maxHistorySize) {
+        currentFrame.history.shift();
+    } else {
+        currentFrame.historyIndex++;
+    }
+    
+    updateHistoryButtons();
+    
+    // Save current frame in animation
+    saveCurrentFrame();
+}
+
 function loadFromHistory(index) {
-    if (index >= 0 && index < history.length) {
-        pixelOpacities = new Map(history[index]);
-        historyIndex = index;
+    if (currentFrameIndex < 0 || currentFrameIndex >= frames.length) return;
+    
+    const currentFrame = frames[currentFrameIndex];
+    
+    if (index >= 0 && index < currentFrame.history.length) {
+        pixelOpacities = new Map(currentFrame.history[index]);
+        currentFrame.historyIndex = index;
+        currentFrame.pixels = new Map(pixelOpacities); // Update frame's current state
         updateDisplay();
         updateHistoryButtons();
+        updateFramesDisplay(); // Update frame preview to reflect history changes
     }
 }
 
 function undo() {
-    if (historyIndex > 0) {
-        loadFromHistory(historyIndex - 1);
+    if (currentFrameIndex < 0 || currentFrameIndex >= frames.length) return;
+    
+    const currentFrame = frames[currentFrameIndex];
+    if (currentFrame.historyIndex > 0) {
+        loadFromHistory(currentFrame.historyIndex - 1);
     }
 }
 
 function redo() {
-    if (historyIndex < history.length - 1) {
-        loadFromHistory(historyIndex + 1);
+    if (currentFrameIndex < 0 || currentFrameIndex >= frames.length) return;
+    
+    const currentFrame = frames[currentFrameIndex];
+    if (currentFrame.historyIndex < currentFrame.history.length - 1) {
+        loadFromHistory(currentFrame.historyIndex + 1);
     }
 }
 
 function updateHistoryButtons() {
+    if (currentFrameIndex < 0 || currentFrameIndex >= frames.length) {
+        if (undoBtn) {
+            undoBtn.disabled = true;
+            undoBtn.style.opacity = '0.5';
+        }
+        if (redoBtn) {
+            redoBtn.disabled = true;
+            redoBtn.style.opacity = '0.5';
+        }
+        return;
+    }
+    
+    const currentFrame = frames[currentFrameIndex];
+    
     if (undoBtn) {
-        undoBtn.disabled = historyIndex <= 0;
-        undoBtn.style.opacity = historyIndex <= 0 ? '0.5' : '1';
+        undoBtn.disabled = currentFrame.historyIndex <= 0;
+        undoBtn.style.opacity = currentFrame.historyIndex <= 0 ? '0.5' : '1';
     }
     if (redoBtn) {
-        redoBtn.disabled = historyIndex >= history.length - 1;
-        redoBtn.style.opacity = historyIndex >= history.length - 1 ? '0.5' : '1';
+        redoBtn.disabled = currentFrame.historyIndex >= currentFrame.history.length - 1;
+        redoBtn.style.opacity = currentFrame.historyIndex >= currentFrame.history.length - 1 ? '0.5' : '1';
     }
 }
+
 
 // Binary input functions
 function toggleBinaryImport() {
@@ -199,6 +772,8 @@ function toggleBinaryImport() {
 function applyBinaryData() {
     const binaryData = binaryInput.value.trim();
     if (!binaryData) return;
+    
+    pauseAnimationIfPlaying();
     
     try {
         const values = binaryData.split(',').map(v => parseInt(v.trim()));
@@ -290,10 +865,20 @@ function initializeGrid() {
     document.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('mouseleave', handleMouseUp);
     
-    // Initialize history with empty state
-    history = [];
-    historyIndex = -1;
-    saveToHistory();
+    // Add touch event prevention for grid container to prevent scrolling on gaps
+    const gridContainer = grid.parentElement;
+    gridContainer.addEventListener('touchstart', (e) => {
+        // Only prevent default if touching the grid area, not pixels
+        const target = e.target;
+        if (target === gridContainer || target === grid) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    gridContainer.addEventListener('touchmove', (e) => {
+        // Always prevent default to avoid scrolling when dragging
+        e.preventDefault();
+    }, { passive: false });
     
     updateDisplay();
 }
@@ -338,9 +923,11 @@ function handleTouchStart(e, row, col) {
 }
 
 function handleTouchMove(e) {
+    // Always prevent default to avoid scrolling
+    e.preventDefault();
+    
     if (!isDrawing) return;
     
-    e.preventDefault();
     const touch = e.touches[0];
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
     
@@ -455,6 +1042,7 @@ function setupSliderPair(slider, input, callback, defaultValue) {
 
 // Brush controls
 function toggleBrushMode() {
+    pauseAnimationIfPlaying();
     brushMode = !brushMode;
     
     if (brushMode) {
@@ -507,6 +1095,7 @@ function updateOpacity() {
 
 // Action functions
 function fillAll() {
+    pauseAnimationIfPlaying();
     for (let row = 0; row < gridSize; row++) {
         const rowWidth = shapePattern[row] || 0;
         const startCol = Math.floor((gridSize - rowWidth) / 2);
@@ -523,12 +1112,14 @@ function fillAll() {
 }
 
 function eraseAll() {
+    pauseAnimationIfPlaying();
     pixelOpacities.clear();
     saveToHistory();
     updateDisplay();
 }
 
 function reverse() {
+    pauseAnimationIfPlaying();
     const newOpacities = new Map();
     
     for (let row = 0; row < gridSize; row++) {
@@ -550,6 +1141,7 @@ function reverse() {
 
 // Transform functions
 function flipHorizontal() {
+    pauseAnimationIfPlaying();
     const newOpacities = new Map();
     
     for (const [pixelId, opacity] of pixelOpacities) {
@@ -568,6 +1160,7 @@ function flipHorizontal() {
 }
 
 function flipVertical() {
+    pauseAnimationIfPlaying();
     const newOpacities = new Map();
     
     for (const [pixelId, opacity] of pixelOpacities) {
@@ -595,6 +1188,7 @@ function flipVertical() {
 }
 
 function rotate90() {
+    pauseAnimationIfPlaying();
     const newOpacities = new Map();
     
     for (const [pixelId, opacity] of pixelOpacities) {
@@ -673,8 +1267,8 @@ function generateBinaryOutput() {
 }
 
 function updateOutput() {
-    const binary = generateBinaryOutput();
-    binaryOutput.textContent = binary;
+    // Generate binary output for internal use
+    generateBinaryOutput();
 }
 
 async function copyToClipboard() {
@@ -773,7 +1367,7 @@ function showFeedback(message, type = 'success') {
                 feedback.parentNode.removeChild(feedback);
             }
         }, 300); // Wait for fade out animation
-    }, 3000);
+    }, 1200);
 }
 
 // Text to pixel art functions
@@ -800,6 +1394,8 @@ function hideEmojiModal() {
 function generateTextPixelArt() {
     const text = textInput.value.trim();
     if (!text) return;
+    
+    pauseAnimationIfPlaying();
     
     const fontSize = parseInt(fontSizeSlider.value);
     const fontType = document.getElementById('fontType').value;
@@ -836,6 +1432,8 @@ function generateTextPixelArt() {
 
 function generateEmojiPixelArt() {
     if (!selectedEmoji) return;
+    
+    pauseAnimationIfPlaying();
     
     const fontSize = parseInt(emojiSizeSlider.value);
     
@@ -1011,6 +1609,7 @@ function updateEmojiSize() {
 
 function applyImageToPixels() {
     if (!uploadedImage) return;
+    pauseAnimationIfPlaying();
 
     const imageData = imageContext.getImageData(0, 0, 25, 25);
     const data = imageData.data;
@@ -1032,7 +1631,6 @@ function applyImageToPixels() {
                 const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
                 const pixelId = `${row}-${col}`;
                 
-                // Always use grayscale logic
                 const opacity = Math.round(brightness);
                 if (opacity > 0) {
                     pixelOpacities.set(pixelId, opacity);
@@ -1043,9 +1641,6 @@ function applyImageToPixels() {
 
     saveToHistory();
     updateDisplay();
-    
-    // DON'T hide import controls - keep them visible for editing
-    // DON'T clear uploadedImage - keep it for re-applying with different settings
 }
 
 // Emoji functions
@@ -1210,6 +1805,152 @@ function showDownloadFeedback() {
     showFeedback('Image downloaded successfully!', 'success');
 }
 
+async function exportAsGif() {
+    if (frames.length <= 1) {
+        showFeedback('Need at least 2 frames to create GIF', 'error');
+        return;
+    }
+    
+    try {
+        showFeedback('Loading GIF library...', 'success');
+        
+        // Fetch worker script to avoid CORS issues
+        let workerUrl;
+        try {
+            const workerResponse = await fetch('https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js');
+            const workerBlob = await workerResponse.blob();
+            workerUrl = URL.createObjectURL(workerBlob);
+        } catch (workerError) {
+            console.warn('Could not load worker script, falling back to single-threaded mode');
+            workerUrl = null;
+        }
+        
+        showFeedback('Generating GIF...', 'success');
+        
+        const pixelSize = 40;
+        const gapSize = 10;
+        const scaleFactor = pixelSize + gapSize;
+        
+        const canvasWidth = gridSize * scaleFactor - gapSize;
+        const canvasHeight = gridSize * scaleFactor - gapSize;
+        
+        // Initialize gif.js
+        const gifOptions = {
+            quality: 10,
+            width: canvasWidth,
+            height: canvasHeight,
+            background: '#000000'
+        };
+        
+        if (workerUrl) {
+            gifOptions.workers = 2;
+            gifOptions.workerScript = workerUrl;
+        } else {
+            gifOptions.workers = 1;
+        }
+        
+        const gif = new GIF(gifOptions);
+        
+        // Generate frames and add to GIF
+        for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+            const frame = frames[frameIndex];
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            
+            // Draw frame
+            for (let row = 0; row < gridSize; row++) {
+                const rowWidth = shapePattern[row] || 0;
+                const startCol = Math.floor((gridSize - rowWidth) / 2);
+                const endCol = startCol + rowWidth - 1;
+                
+                for (let col = startCol; col <= endCol; col++) {
+                    const pixelId = `${row}-${col}`;
+                    const opacity = frame.pixels.get(pixelId) || 0;
+                    
+                    const x = col * scaleFactor;
+                    const y = row * scaleFactor;
+                    
+                    // Draw background pixel
+                    ctx.fillStyle = '#111111';
+                    ctx.fillRect(x, y, pixelSize, pixelSize);
+                    
+                    // Draw pixel if it has opacity
+                    if (opacity > 0) {
+                        const grayValue = Math.round(opacity);
+                        ctx.fillStyle = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+                        ctx.fillRect(x, y, pixelSize, pixelSize);
+                    }
+                }
+            }
+            
+            // Add frame to GIF with its duration
+            gif.addFrame(canvas, {delay: frame.duration});
+        }
+        
+        // Render and download GIF
+        gif.on('finished', function(blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'glyph-matrix-animation.gif';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Clean up worker URL if created
+            if (workerUrl) {
+                URL.revokeObjectURL(workerUrl);
+            }
+            
+            showFeedback('GIF exported successfully!', 'success');
+        });
+        
+        gif.on('progress', function(p) {
+            const percent = Math.round(p * 100);
+            showFeedback(`Generating GIF... ${percent}%`, 'success');
+        });
+        
+        gif.render();
+        
+    } catch (error) {
+        showFeedback('Failed to export GIF', 'error');
+        console.error('GIF export error:', error);
+    }
+}
+
+// Header toggle functionality
+function initHeaderToggle() {
+    const headerToggle = document.getElementById('headerToggle');
+    const header = document.querySelector('.header');
+    
+    headerToggle.addEventListener('click', () => {
+        header.classList.toggle('collapsed');
+        
+        // Update the feather icon after the toggle
+        setTimeout(() => {
+            feather.replace();
+        }, 50);
+    });
+}
+
+// Horizontal scrolling for frames container
+function initFramesScrolling() {
+    const framesContainer = document.getElementById('framesContainer');
+    
+    // Add wheel event listener for horizontal scrolling
+    framesContainer.addEventListener('wheel', (e) => {
+        // Prevent default vertical scrolling
+        e.preventDefault();
+        
+        // Convert vertical scroll to horizontal
+        framesContainer.scrollLeft += e.deltaY;
+    }, { passive: false });
+}
+
 // Collapsible controls
 function initCollapsibleControls() {
     document.querySelectorAll('.control-header').forEach(header => {
@@ -1238,6 +1979,39 @@ rotateBtn.addEventListener('click', rotate90);
 copyBtn.addEventListener('click', copyToClipboard);
 binaryBtn.addEventListener('click', toggleBinaryImport);
 downloadBtn.addEventListener('click', downloadAsImage);
+exportGifBtn.addEventListener('click', exportAsGif);
+
+// Animation event listeners
+newFrameBtn.addEventListener('click', createNewFrame);
+duplicateFrameBtn.addEventListener('click', duplicateCurrentFrame);
+deleteFrameBtn.addEventListener('click', deleteCurrentFrame);
+playBtn.addEventListener('click', togglePlayback);
+durationSlider.addEventListener('input', updateCurrentFrameDuration);
+
+// Double-tap reset functionality for duration slider
+let lastTapTime = 0;
+durationSlider.addEventListener('click', (e) => {
+    const currentTime = Date.now();
+    const timeDiff = currentTime - lastTapTime;
+    
+    if (timeDiff < 300) { // Double-tap within 300ms
+        // Reset to default value (100ms)
+        durationSlider.value = 100;
+        frameDuration = 100;
+        if (currentFrameIndex >= 0 && currentFrameIndex < frames.length) {
+            frames[currentFrameIndex].duration = frameDuration;
+            updateFramesDisplay();
+        }
+        updateDurationDisplay();
+        showFeedback('Duration reset to 100ms', 'success');
+    }
+    
+    lastTapTime = currentTime;
+});
+
+// Manual input field event listeners
+durationValue.addEventListener('input', updateDurationFromInput);
+durationValue.addEventListener('change', updateDurationFromInput);
 
 // History event listeners
 if (undoBtn) undoBtn.addEventListener('click', undo);
@@ -1275,8 +2049,11 @@ document.addEventListener('DOMContentLoaded', () => {
     feather.replace();
     
     initializeGrid();
+    initializeAnimation();
     createImageCanvas();
     initCollapsibleControls();
+    initFramesScrolling();
+    initHeaderToggle();
     
     // Initialize emoji functionality
     populateEmojiGrid('smileys');

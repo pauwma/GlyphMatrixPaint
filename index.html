@@ -6,6 +6,7 @@
     <title>Glyph Matrix Editor</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.min.js"></script>
 
     <link rel="apple-touch-icon" sizes="180x180" href="img/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon/favicon-32x32.png">
@@ -18,9 +19,56 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1 class="main-title">Glyph Matrix Editor</h1>
-            <p>By <a href="https://privacidad.me/@pauwma">Pauwma</a></p>
+        <div class="header collapsible-header">
+            <div class="header-toggle" id="headerToggle">
+                <i data-feather="chevron-down" class="header-chevron"></i>
+            </div>
+            <div class="header-content">
+                <h1 class="main-title">Glyph Matrix Editor</h1>
+                <p>By <a href="https://privacidad.me/@pauwma">Pauwma</a></p>
+            </div>
+        </div>
+
+        <!-- Animation Controls Section -->
+        <div class="animation-section">
+            <div class="control-section collapsed">
+                <div class="control-header">
+                    <h3>Animation</h3>
+                </div>
+                <div class="control-content">
+                    <div class="animation-controls">
+                        <button class="btn" id="newFrameBtn">
+                            <i data-feather="plus" class="btn-icon"></i>
+                        </button>
+                        <button class="btn" id="duplicateFrameBtn">
+                            <i data-feather="copy" class="btn-icon"></i>
+                        </button>
+                        <button class="btn danger" id="deleteFrameBtn">
+                            <i data-feather="trash" class="btn-icon"></i>
+                        </button>
+                        <button class="btn primary" id="playBtn">
+                            <i data-feather="play" class="btn-icon"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Frames Timeline -->
+                    <div class="frames-timeline">
+                        <div class="frames-container" id="framesContainer">
+                            <!-- Frames will be added here dynamically -->
+                        </div>
+                    </div>
+                    
+                    <!-- Duration Control -->
+                    <div class="duration-control">
+                        <div class="slider-group">
+                            <label class="slider-label">Duration</label>
+                            <input type="range" id="durationSlider" min="50" max="1000" value="100" class="slider" title="Double-click to reset">
+                            <input type="number" id="durationValue" min="50" max="1000" value="100" class="slider-input">
+                            <span class="duration-unit">ms</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="main-content">
@@ -34,7 +82,7 @@
             </div>
 
             <div class="controls">
-
+                
                 <div class="history-controls">
                     <button class="btn history-btn" id="undoBtn">
                         <i data-feather="arrow-left" class="btn-icon"></i>
@@ -258,9 +306,10 @@
                                 <i data-feather="download" class="btn-icon"></i>
                             Download as Image
                         </button>
-                        <div class="output-section" id="binaryOutput">
-                            Raw data will appear here...
-                        </div>
+                        <button class="btn primary" id="exportGifBtn">
+                                <i data-feather="film" class="btn-icon"></i>
+                            Export as GIF
+                        </button>
                         <button class="btn primary" id="copyBtn">
                                 <i data-feather="copy" class="btn-icon"></i>
                             Copy Raw
