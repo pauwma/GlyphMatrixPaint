@@ -1681,7 +1681,6 @@ a:hover   { opacity: .8; }
 
 @media (max-width: 480px) {
     .animation-controls {
-        grid-template-columns: 1fr 1fr;
         gap: 6px;
     }
     
