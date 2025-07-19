@@ -343,6 +343,10 @@ a:hover   { opacity: .8; }
     border-color: #fff;
 }
 
+.btn.last {
+    margin-bottom: 0;
+}
+
 .btn-icon {
     width: 16px;
     height: 16px;
@@ -524,6 +528,11 @@ a:hover   { opacity: .8; }
     width: 100%;
     min-width: 0;
     flex: none;
+}
+
+/* Remove bottom margin from last action-row in import section */
+.action-row.last {
+    margin-bottom: 0;
 }
 
 /* Responsive adjustments for mobile */
@@ -762,8 +771,6 @@ a:hover   { opacity: .8; }
 /* Image upload styles */
 .import-controls {
     margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #333;
 }
 
 /*---------- INI - SLIDERS ----------*/
@@ -947,6 +954,10 @@ a:hover   { opacity: .8; }
 
 .input-group {
     margin-bottom: 20px;
+}
+
+.input-group.nomargin {
+    margin-bottom: 0px;
 }
 
 .input-group label {
