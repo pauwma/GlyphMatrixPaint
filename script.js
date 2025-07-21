@@ -66,16 +66,55 @@ const invertBtn = document.getElementById('invertBtn');
 const flipHBtn = document.getElementById('flipHBtn');
 const flipVBtn = document.getElementById('flipVBtn');
 const rotateBtn = document.getElementById('rotateBtn');
-const copyBtn = document.getElementById('copyBtn');
-const copyFeedback = document.getElementById('copyFeedback');
 const activeCount = document.getElementById('activeCount');
 const totalPixelsCount = document.getElementById('totalPixels');
 const emojiGrid = document.getElementById('emojiGrid');
 const emojiSearch = document.getElementById('emojiSearch');
 const categoryBtns = document.querySelectorAll('.category-btn');
 const selectedEmojiDisplay = document.querySelector('.selected-emoji-display');
-const downloadBtn = document.getElementById('downloadBtn');
-const exportGifBtn = document.getElementById('exportGifBtn');
+
+// Export modal elements
+const exportBtn = document.getElementById('exportBtn');
+const exportModal = document.getElementById('exportModal');
+const closeExportModal = document.getElementById('closeExportModal');
+const exportTabs = document.querySelectorAll('.export-tab');
+const exportTabContents = document.querySelectorAll('.export-tab-content');
+const exportPreviewCanvas = document.getElementById('exportPreviewCanvas');
+const previewSize = document.getElementById('previewSize');
+const previewFormat = document.getElementById('previewFormat');
+
+// Image export elements
+const imageFormat = document.getElementById('imageFormat');
+const imageScale = document.getElementById('imageScale');
+const imageQuality = document.getElementById('imageQuality');
+const imageQualityValue = document.getElementById('imageQualityValue');
+const qualityGroup = document.getElementById('qualityGroup');
+const imageBg = document.getElementById('imageBg');
+const customBgColor = document.getElementById('customBgColor');
+const pixelStyle = document.getElementById('pixelStyle');
+const opacityThreshold = document.getElementById('opacityThreshold');
+const opacityThresholdValue = document.getElementById('opacityThresholdValue');
+const downloadImageBtn = document.getElementById('downloadImageBtn');
+
+// Animation export elements
+const animationFormat = document.getElementById('animationFormat');
+const downloadAnimationBtn = document.getElementById('downloadAnimationBtn');
+const animationPreviewCanvas = document.getElementById('animationPreviewCanvas');
+const animationPreviewInfo = document.getElementById('animationPreviewInfo');
+const previewPlayPauseBtn = document.getElementById('previewPlayPauseBtn');
+
+// Data export elements
+const dataFormat = document.getElementById('dataFormat');
+const dataOutput = document.getElementById('dataOutput');
+const copyDataBtn = document.getElementById('copyDataBtn');
+const downloadDataBtn = document.getElementById('downloadDataBtn');
+
+// Share elements
+const sharePreset = document.getElementById('sharePreset');
+const shareTwitter = document.getElementById('shareTwitter');
+const shareFacebook = document.getElementById('shareFacebook');
+const shareNative = document.getElementById('shareNative');
+const copyImageLink = document.getElementById('copyImageLink');
 
 // Animation DOM elements
 const newFrameBtn = document.getElementById('newFrameBtn');
@@ -314,6 +353,9 @@ function saveCurrentFrame() {
 
 function updateFramesDisplay() {
     framesContainer.innerHTML = '';
+    
+    // Update export tab states when frames change
+    updateExportTabStates();
     
     frames.forEach((frame, index) => {
         const frameElement = document.createElement('div');
@@ -889,7 +931,7 @@ function applyBinaryData() {
         
         saveToHistory();
         updateDisplay();
-        showBinaryFeedback('Raw data applied successfully!', 'success');
+        showBinaryFeedback('Pixel data applied successfully!', 'success');
         
         // Hide binary import controls after applying
         binaryImportControls.style.display = 'none';
@@ -899,7 +941,7 @@ function applyBinaryData() {
         binaryInput.value = '';
         
     } catch (error) {
-        showBinaryFeedback('Invalid raw data format', 'error');
+        showBinaryFeedback('Invalid pixel data format', 'error');
     }
 }
 
@@ -1365,7 +1407,7 @@ async function copyToClipboard() {
     
     try {
         await navigator.clipboard.writeText(binary);
-        showFeedback('Raw data copied to clipboard!', 'success');
+        showFeedback('Pixel data copied to clipboard!', 'success');
     } catch (err) {
         // Fallback for older browsers
         const textArea = document.createElement('textarea');
@@ -1379,9 +1421,9 @@ async function copyToClipboard() {
         
         try {
             document.execCommand('copy');
-            showFeedback('Raw data copied to clipboard!', 'success');
+            showFeedback('Pixel data copied to clipboard!', 'success');
         } catch (err) {
-            showFeedback('Failed to copy raw data', 'error');
+            showFeedback('Failed to copy pixel data', 'error');
         }
         
         document.body.removeChild(textArea);
@@ -1462,30 +1504,36 @@ function showFeedback(message, type = 'success') {
 // Text to pixel art functions
 function showTextModal() {
     textModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
     textInput.focus();
 }
 
 function hideTextModal() {
     textModal.style.display = 'none';
+    document.body.style.overflow = '';
     textInput.value = '';
 }
 
 function showEmojiModal() {
     emojiModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 function hideEmojiModal() {
     emojiModal.style.display = 'none';
+    document.body.style.overflow = '';
     // DON'T reset emoji selection and category - keep user's current state
     // This preserves the selected emoji and category for next time
 }
 
 function showGifModal() {
     gifModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 function hideGifModal() {
     gifModal.style.display = 'none';
+    document.body.style.overflow = '';
     // Reset GIF data
     currentGifData = null;
     gifFrames = [];
@@ -1495,10 +1543,12 @@ function hideGifModal() {
 
 function showDeleteAllModal() {
     deleteAllModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 }
 
 function hideDeleteAllModal() {
     deleteAllModal.style.display = 'none';
+    document.body.style.overflow = '';
 }
 
 function deleteAllFrames() {
@@ -2353,6 +2403,130 @@ async function exportAsGif() {
     }
 }
 
+async function exportAsWebM() {
+    if (frames.length <= 1) {
+        showFeedback('Need at least 2 frames to create WebM', 'error');
+        return;
+    }
+    
+    try {
+        showFeedback('Generating WebM...', 'success');
+        
+        // Create offscreen canvas for recording
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const pixelSize = 40;
+        const gapSize = 10;
+        const scaleFactor = pixelSize + gapSize;
+        
+        const canvasWidth = gridSize * scaleFactor - gapSize;
+        const canvasHeight = gridSize * scaleFactor - gapSize;
+        
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        
+        // Create MediaRecorder
+        const stream = canvas.captureStream(30); // 30 FPS
+        const mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm;codecs=vp9'
+        });
+        
+        const chunks = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                chunks.push(event.data);
+            }
+        };
+        
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'glyph-matrix-animation.webm';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showFeedback('WebM exported successfully!', 'success');
+        };
+        
+        mediaRecorder.onerror = (event) => {
+            showFeedback('Failed to export WebM', 'error');
+            console.error('WebM export error:', event.error);
+        };
+        
+        // Start recording
+        mediaRecorder.start();
+        
+        // Render animation frames
+        let currentFrame = 0;
+        let totalDuration = 0;
+        
+        // Calculate total animation duration
+        frames.forEach(frame => {
+            totalDuration += frame.duration;
+        });
+        
+        const renderFrame = () => {
+            if (currentFrame >= frames.length) {
+                // Animation complete, stop recording
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                }, 100); // Small delay to ensure last frame is captured
+                return;
+            }
+            
+            const frame = frames[currentFrame];
+            
+            // Clear canvas
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Draw frame pixels
+            for (let row = 0; row < gridSize; row++) {
+                const rowWidth = shapePattern[row] || 0;
+                const startCol = Math.floor((gridSize - rowWidth) / 2);
+                const endCol = startCol + rowWidth - 1;
+                
+                for (let col = startCol; col <= endCol; col++) {
+                    const pixelId = `${row}-${col}`;
+                    const opacity = frame.pixels.get(pixelId) || 0;
+                    
+                    const x = col * scaleFactor;
+                    const y = row * scaleFactor;
+                    
+                    // Draw background pixel
+                    ctx.fillStyle = '#111111';
+                    ctx.fillRect(x, y, pixelSize, pixelSize);
+                    
+                    // Draw pixel if it has opacity
+                    if (opacity > 0) {
+                        const grayValue = Math.round(opacity);
+                        ctx.fillStyle = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+                        ctx.fillRect(x, y, pixelSize, pixelSize);
+                    }
+                }
+            }
+            
+            currentFrame++;
+            
+            // Schedule next frame
+            setTimeout(renderFrame, frame.duration);
+        };
+        
+        // Start rendering
+        renderFrame();
+        
+    } catch (error) {
+        showFeedback('Failed to export WebM', 'error');
+        console.error('WebM export error:', error);
+    }
+}
+
 // Header close functionality
 function initHeaderClose() {
     const headerClose = document.getElementById('headerClose');
@@ -2402,12 +2576,13 @@ invertBtn.addEventListener('click', reverse);
 flipHBtn.addEventListener('click', flipHorizontal);
 flipVBtn.addEventListener('click', flipVertical);
 rotateBtn.addEventListener('click', rotate90);
-copyBtn.addEventListener('click', copyToClipboard);
 binaryBtn.addEventListener('click', toggleBinaryImport);
 gifBtn.addEventListener('click', () => gifUpload.click());
 gifUpload.addEventListener('change', handleGifUpload);
-downloadBtn.addEventListener('click', downloadAsImage);
-exportGifBtn.addEventListener('click', exportAsGif);
+
+// Export modal event listeners
+exportBtn.addEventListener('click', openExportModal);
+closeExportModal.addEventListener('click', closeExportModalHandler);
 
 // Animation event listeners
 newFrameBtn.addEventListener('click', createNewFrame);
@@ -2520,8 +2695,741 @@ document.addEventListener('keydown', (e) => {
         hideEmojiModal();
         hideGifModal();
         hideDeleteAllModal();
+        closeExportModalHandler();
     }
 });
+
+// Export Modal Functions
+function openExportModal() {
+    // Stop animation if playing
+    pauseAnimationIfPlaying();
+    
+    // Save current frame state before exporting
+    saveCurrentFrame();
+    
+    // Update export tab states before showing modal
+    updateExportTabStates();
+    
+    // Update color input to reflect current background selection
+    updateCustomColorVisibility();
+    
+    // Update quality slider visibility based on selected format
+    updateQualityVisibility();
+    
+    exportModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    updateExportPreview();
+    updateDataOutput();
+    
+    // Initialize feather icons for the modal
+    setTimeout(() => {
+        feather.replace();
+    }, 100);
+}
+
+function closeExportModalHandler() {
+    stopAnimationPreview(); // Stop animation preview when closing modal
+    exportModal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function updateExportTabStates() {
+    const animationTab = document.querySelector('[data-tab="animation"]');
+    if (animationTab) {
+        if (frames.length <= 1) {
+            animationTab.classList.add('disabled');
+            animationTab.style.opacity = '0.5';
+            animationTab.style.cursor = 'not-allowed';
+            
+            // If animation tab is currently active, switch to image tab
+            if (animationTab.classList.contains('active')) {
+                switchExportTab('image');
+            }
+        } else {
+            animationTab.classList.remove('disabled');
+            animationTab.style.opacity = '1';
+            animationTab.style.cursor = 'pointer';
+        }
+    }
+}
+
+function switchExportTab(tabName) {
+    // Don't allow switching to animation tab if only one frame
+    if (tabName === 'animation' && frames.length <= 1) {
+        return;
+    }
+    
+    // Remove active class from all tabs and contents
+    exportTabs.forEach(tab => tab.classList.remove('active'));
+    exportTabContents.forEach(content => content.classList.remove('active'));
+    
+    // Add active class to selected tab and content
+    const selectedTab = document.querySelector(`[data-tab="${tabName}"]`);
+    const selectedContent = document.getElementById(`${tabName}Tab`);
+    
+    if (selectedTab && selectedContent) {
+        selectedTab.classList.add('active');
+        selectedContent.classList.add('active');
+    }
+    
+    // Update preview if on image tab
+    if (tabName === 'image') {
+        stopAnimationPreview(); // Stop animation when switching away
+        updateExportPreview();
+    } else if (tabName === 'animation') {
+        startAnimationPreview(); // Start animation when switching to animation tab
+    } else if (tabName === 'data') {
+        stopAnimationPreview(); // Stop animation when switching away
+        updateDataOutput();
+    } else {
+        stopAnimationPreview(); // Stop animation when switching to any other tab
+    }
+}
+
+function updateExportPreview() {
+    if (!exportPreviewCanvas) return;
+    
+    const ctx = exportPreviewCanvas.getContext('2d');
+    const scale = parseInt(imageScale.value) || 4;
+    const format = imageFormat.value;
+    const bg = imageBg.value;
+    const style = pixelStyle.value;
+    const threshold = parseInt(opacityThreshold.value) || 0;
+    
+    // Calculate canvas dimensions
+    const pixelSize = 8; // Preview pixel size
+    const gapSize = 2;
+    const totalSize = gridSize * (pixelSize + gapSize) - gapSize;
+    
+    exportPreviewCanvas.width = totalSize;
+    exportPreviewCanvas.height = totalSize;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, exportPreviewCanvas.width, exportPreviewCanvas.height);
+    
+    // Set background
+    if (bg === 'black') {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, exportPreviewCanvas.width, exportPreviewCanvas.height);
+    } else if (bg === 'white') {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, exportPreviewCanvas.width, exportPreviewCanvas.height);
+    } else if (bg === 'custom') {
+        ctx.fillStyle = customBgColor.value;
+        ctx.fillRect(0, 0, exportPreviewCanvas.width, exportPreviewCanvas.height);
+    }
+    
+    // Draw pixels
+    const currentFrame = frames[currentFrameIndex];
+    const pixelData = currentFrame ? currentFrame.pixels : pixelOpacities;
+    
+    // Draw pixels exactly like main grid
+    for (let row = 0; row < gridSize; row++) {
+        const rowWidth = shapePattern[row] || 0;
+        const startCol = Math.floor((gridSize - rowWidth) / 2);
+        const endCol = startCol + rowWidth - 1;
+        
+        for (let col = startCol; col <= endCol; col++) {
+            const x = col * (pixelSize + gapSize);
+            const y = row * (pixelSize + gapSize);
+            
+            const pixelId = `${row}-${col}`;
+            const pixelValue = pixelData.get(pixelId) || 0;
+            
+            // Only draw pixels that meet threshold
+            if (pixelValue >= threshold) {
+                // Use same color logic as createExportCanvas: rgb(grayValue, grayValue, grayValue)
+                const grayValue = pixelValue;
+                ctx.fillStyle = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+                
+                if (style === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(x + pixelSize/2, y + pixelSize/2, pixelSize/2, 0, 2 * Math.PI);
+                    ctx.fill();
+                } else if (style === 'square') {
+                    ctx.fillRect(x, y, pixelSize, pixelSize);
+                } else { // rounded
+                    const radius = pixelSize * 0.2;
+                    ctx.beginPath();
+                    if (ctx.roundRect) {
+                        ctx.roundRect(x, y, pixelSize, pixelSize, radius);
+                    } else {
+                        // Fallback for browsers without roundRect
+                        ctx.rect(x, y, pixelSize, pixelSize);
+                    }
+                    ctx.fill();
+                }
+            }
+        }
+    }
+    
+    // Update preview info
+    const actualScale = scale;
+    const actualWidth = totalSize * actualScale / 4; // Since preview is at 1/4 scale
+    const actualHeight = actualWidth;
+    
+    previewSize.textContent = `Size: ${actualWidth}×${actualHeight}`;
+    previewFormat.textContent = `Format: ${format.toUpperCase()}`;
+}
+
+// Animation preview functionality
+let animationPreviewInterval = null;
+let animationPreviewCurrentFrame = 0;
+let animationPreviewPlaying = false;
+
+function startAnimationPreview() {
+    if (!animationPreviewCanvas || frames.length <= 1) {
+        if (animationPreviewInfo) {
+            animationPreviewInfo.textContent = frames.length <= 1 ? 'Need multiple frames for animation' : 'Animation Preview';
+        }
+        return;
+    }
+    
+    stopAnimationPreview(); // Stop any existing preview
+    animationPreviewPlaying = true;
+    updatePreviewPlayPauseButton();
+    
+    const ctx = animationPreviewCanvas.getContext('2d');
+    const pixelSize = 8; // Same as image preview
+    const gapSize = 2;
+    const totalSize = gridSize * (pixelSize + gapSize) - gapSize;
+    
+    animationPreviewCanvas.width = totalSize;
+    animationPreviewCanvas.height = totalSize;
+    animationPreviewCanvas.style.width = '200px';
+    animationPreviewCanvas.style.height = '200px';
+    
+    
+    // Render first frame and start animation loop
+    renderAnimationFrame();
+}
+
+function stopAnimationPreview() {
+    if (animationPreviewInterval) {
+        clearTimeout(animationPreviewInterval);
+        animationPreviewInterval = null;
+    }
+    animationPreviewCurrentFrame = 0;
+    animationPreviewPlaying = false;
+    updatePreviewPlayPauseButton();
+}
+
+function toggleAnimationPreview() {
+    if (!animationPreviewCanvas || frames.length <= 1) return;
+    
+    if (animationPreviewPlaying) {
+        pauseAnimationPreview();
+    } else {
+        resumeAnimationPreview();
+    }
+}
+
+function pauseAnimationPreview() {
+    if (animationPreviewInterval) {
+        clearTimeout(animationPreviewInterval);
+        animationPreviewInterval = null;
+    }
+    animationPreviewPlaying = false;
+    updatePreviewPlayPauseButton();
+}
+
+function resumeAnimationPreview() {
+    if (!animationPreviewCanvas || frames.length <= 1) return;
+    
+    // Clear any existing interval
+    if (animationPreviewInterval) {
+        clearTimeout(animationPreviewInterval);
+        animationPreviewInterval = null;
+    }
+    
+    animationPreviewPlaying = true;
+    updatePreviewPlayPauseButton();
+    
+    // Use the same render logic as startAnimationPreview
+    const ctx = animationPreviewCanvas.getContext('2d');
+    const pixelSize = 8;
+    const gapSize = 2;
+    const totalSize = gridSize * (pixelSize + gapSize) - gapSize;
+    
+    // Ensure canvas is properly sized (same as startAnimationPreview)
+    animationPreviewCanvas.width = totalSize;
+    animationPreviewCanvas.height = totalSize;
+    animationPreviewCanvas.style.width = '200px';
+    animationPreviewCanvas.style.height = '200px';
+    
+    // Render current frame immediately, then continue animation
+    renderAnimationFrame();
+}
+
+function renderAnimationFrame() {
+    if (!animationPreviewCanvas || frames.length <= 1 || !animationPreviewPlaying) return;
+    
+    const ctx = animationPreviewCanvas.getContext('2d');
+    const pixelSize = 8;
+    const gapSize = 2;
+    const totalSize = gridSize * (pixelSize + gapSize) - gapSize;
+    const frame = frames[animationPreviewCurrentFrame];
+    if (!frame) return;
+    
+    // Clear canvas with dark background like main grid
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, totalSize, totalSize);
+    
+    // Draw pixels exactly like main grid
+    for (let row = 0; row < gridSize; row++) {
+        const rowWidth = shapePattern[row] || 0;
+        const startCol = Math.floor((gridSize - rowWidth) / 2);
+        const endCol = startCol + rowWidth - 1;
+        
+        for (let col = startCol; col <= endCol; col++) {
+            const x = col * (pixelSize + gapSize);
+            const y = row * (pixelSize + gapSize);
+            
+            const pixelId = `${row}-${col}`;
+            const pixelValue = frame.pixels.get(pixelId) || 0;
+            
+            // Draw background pixel (inactive state) like main grid
+            ctx.fillStyle = '#000';
+            const radius = pixelSize * 0.2; // 20% border-radius like main grid
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(x, y, pixelSize, pixelSize, radius);
+            } else {
+                ctx.rect(x, y, pixelSize, pixelSize);
+            }
+            ctx.fill();
+            
+            // Draw active pixel if it has grayscale value
+            if (pixelValue > 0) {
+                const grayValue = pixelValue;
+                ctx.fillStyle = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+                
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(x, y, pixelSize, pixelSize, radius);
+                } else {
+                    ctx.rect(x, y, pixelSize, pixelSize);
+                }
+                ctx.fill();
+            }
+        }
+    }
+    
+    // Update info
+    if (animationPreviewInfo) {
+        animationPreviewInfo.textContent = `Frame ${animationPreviewCurrentFrame + 1}/${frames.length} (${frame.duration}ms)`;
+    }
+    
+    // Store current frame's duration before moving to next frame
+    const currentFrameDuration = frame.duration;
+    
+    // Move to next frame
+    animationPreviewCurrentFrame = (animationPreviewCurrentFrame + 1) % frames.length;
+    
+    // Schedule next frame using the duration of the frame we just displayed
+    if (frames.length > 1 && animationPreviewPlaying) {
+        animationPreviewInterval = setTimeout(() => {
+            renderAnimationFrame();
+        }, currentFrameDuration);
+    }
+}
+
+function updatePreviewPlayPauseButton() {
+    if (!previewPlayPauseBtn) return;
+    
+    const icon = previewPlayPauseBtn.querySelector('.preview-btn-icon');
+    if (!icon) return;
+    
+    if (animationPreviewPlaying) {
+        icon.setAttribute('data-feather', 'pause');
+    } else {
+        icon.setAttribute('data-feather', 'play');
+    }
+    
+    // Update feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+function updateDataOutput() {
+    if (!dataOutput) return;
+    
+    const format = dataFormat.value;
+    let output = '';
+    
+    if (format === 'binary') {
+        output = generateBinaryOutput();
+    } else if (format === 'json') {
+        const frameData = {
+            version: "1.0",
+            dimensions: { width: gridSize, height: gridSize },
+            shape: shapePattern,
+            frames: frames.map((frame, index) => ({
+                index: index,
+                duration: frame.duration || frameDuration,
+                pixels: Array.from(frame.pixels || new Map()).map(([index, opacity]) => ({
+                    index: index,
+                    row: Math.floor(index / gridSize),
+                    col: index % gridSize,
+                    opacity: opacity
+                }))
+            }))
+        };
+        output = JSON.stringify(frameData, null, 2);
+    } else if (format === 'array') {
+        const currentFrame = frames[currentFrameIndex];
+        const pixelData = currentFrame ? currentFrame.pixels : pixelOpacities;
+        const pixelArray = [];
+        for (let row = 0; row < gridSize; row++) {
+            for (let col = 0; col < gridSize; col++) {
+                const pixelId = `${row}-${col}`;
+                pixelArray.push(pixelData.get(pixelId) || 0);
+            }
+        }
+        output = `const pixelData = [${pixelArray.join(', ')}];`;
+    }
+    
+    dataOutput.value = output;
+}
+
+function createExportCanvas(scale = 4, backgroundType = 'transparent', customColor = '#000000', pixelStyleType = 'rounded', opacityThresholdValue = 0) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const pixelSize = 10 * scale;
+    const gapSize = 2 * scale;
+    const totalSize = gridSize * (pixelSize + gapSize) - gapSize;
+    
+    canvas.width = totalSize;
+    canvas.height = totalSize;
+    
+    // Set background
+    if (backgroundType === 'black') {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else if (backgroundType === 'white') {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else if (backgroundType === 'custom') {
+        ctx.fillStyle = customColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    // Draw pixels
+    const currentFrame = frames[currentFrameIndex];
+    const pixelData = currentFrame ? currentFrame.pixels : pixelOpacities;
+    
+    for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+            // Always use shape pattern (export mode removed)
+            const rowWidth = shapePattern[row] || 0;
+            const startCol = Math.floor((gridSize - rowWidth) / 2);
+            const endCol = startCol + rowWidth - 1;
+            
+            if (col < startCol || col > endCol) {
+                continue; // Skip pixels outside shape pattern
+            }
+            
+            const pixelId = `${row}-${col}`;
+            const pixelValue = pixelData.get(pixelId) || 0;
+            
+            const x = col * (pixelSize + gapSize);
+            const y = row * (pixelSize + gapSize);
+            
+            // Check if grayscale value meets threshold for rendering
+            const shouldRender = pixelValue >= opacityThresholdValue;
+            
+            if (shouldRender) {
+                // Render the pixel with its grayscale value
+                const grayValue = pixelValue;
+                ctx.fillStyle = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+                
+                if (pixelStyleType === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(x + pixelSize/2, y + pixelSize/2, pixelSize/2, 0, 2 * Math.PI);
+                    ctx.fill();
+                } else if (pixelStyleType === 'square') {
+                    ctx.fillRect(x, y, pixelSize, pixelSize);
+                } else { // rounded
+                    const radius = pixelSize * 0.2;
+                    ctx.beginPath();
+                    if (ctx.roundRect) {
+                        ctx.roundRect(x, y, pixelSize, pixelSize, radius);
+                    } else {
+                        // Fallback for browsers without roundRect
+                        ctx.rect(x, y, pixelSize, pixelSize);
+                    }
+                    ctx.fill();
+                }
+            }
+        }
+    }
+    
+    return canvas;
+}
+
+function downloadImage() {
+    const scale = parseInt(imageScale.value) || 4;
+    const format = imageFormat.value;
+    const quality = parseInt(imageQualityValue.value) / 100;
+    const bg = imageBg.value;
+    const customColor = customBgColor.value;
+    const style = pixelStyle.value;
+    const threshold = parseInt(opacityThreshold.value) || 0;
+    
+    const canvas = createExportCanvas(scale, bg, customColor, style, threshold);
+    
+    let mimeType = 'image/png';
+    let filename = 'glyph-matrix';
+    
+    if (format === 'jpg') {
+        mimeType = 'image/jpeg';
+        filename += '.jpg';
+    } else if (format === 'webp') {
+        mimeType = 'image/webp';
+        filename += '.webp';
+    } else if (format === 'png') {
+        filename += '.png';
+    } else if (format === 'svg') {
+        downloadSVG();
+        return;
+    } else if (format === 'ico') {
+        downloadICO();
+        return;
+    }
+    
+    canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showFeedback(`${format.toUpperCase()} image downloaded!`, 'success');
+    }, mimeType, quality);
+}
+
+function downloadSVG() {
+    const scale = parseInt(imageScale.value) || 4;
+    const bg = imageBg.value;
+    const customColor = customBgColor.value;
+    const style = pixelStyle.value;
+    const threshold = parseInt(opacityThreshold.value) || 0;
+    
+    const pixelSize = 10 * scale;
+    const gapSize = 2 * scale;
+    const totalSize = gridSize * (pixelSize + gapSize) - gapSize;
+    
+    let svg = `<svg width="${totalSize}" height="${totalSize}" xmlns="http://www.w3.org/2000/svg">`;
+    
+    // Add background if not transparent
+    if (bg === 'black') {
+        svg += `<rect width="100%" height="100%" fill="#000"/>`;
+    } else if (bg === 'white') {
+        svg += `<rect width="100%" height="100%" fill="#fff"/>`;
+    } else if (bg === 'custom') {
+        svg += `<rect width="100%" height="100%" fill="${customColor}"/>`;
+    }
+    
+    // Add pixels
+    const currentFrame = frames[currentFrameIndex];
+    const pixelData = currentFrame ? currentFrame.pixels : pixelOpacities;
+    
+    for (let row = 0; row < gridSize; row++) {
+        const rowWidth = shapePattern[row] || 0;
+        const startCol = Math.floor((gridSize - rowWidth) / 2);
+        const endCol = startCol + rowWidth - 1;
+        
+        for (let col = startCol; col <= endCol; col++) {
+            const pixelId = `${row}-${col}`;
+            const opacity = pixelData.get(pixelId);
+            
+            // Convert opacity (0-255) to grayscale color (255 = white, 0 = black)
+            // Default to 0 if pixel doesn't exist in the map
+            const pixelValue = opacity || 0;
+            
+            // Check if grayscale value meets threshold for rendering
+            const shouldRender = pixelValue >= threshold;
+            
+            if (shouldRender) {
+                const grayValue = Math.round(pixelValue);
+                const grayColor = `rgb(${grayValue},${grayValue},${grayValue})`;
+                
+                const x = col * (pixelSize + gapSize);
+                const y = row * (pixelSize + gapSize);
+                
+                if (style === 'circle') {
+                    svg += `<circle cx="${x + pixelSize/2}" cy="${y + pixelSize/2}" r="${pixelSize/2}" fill="${grayColor}"/>`;
+                } else if (style === 'square') {
+                    svg += `<rect x="${x}" y="${y}" width="${pixelSize}" height="${pixelSize}" fill="${grayColor}"/>`;
+                } else { // rounded
+                    const radius = pixelSize * 0.2;
+                    svg += `<rect x="${x}" y="${y}" width="${pixelSize}" height="${pixelSize}" rx="${radius}" fill="${grayColor}"/>`;
+                }
+            }
+        }
+    }
+    
+    svg += '</svg>';
+    
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'glyph-matrix.svg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showFeedback('SVG image downloaded!', 'success');
+}
+
+async function downloadICO() {
+    // ICO format requires multiple sizes - create a simple single-size ICO
+    const canvas = createExportCanvas(2, imageBg.value, customBgColor.value, pixelStyle.value, parseInt(opacityThreshold.value) || 0);
+    
+    canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'glyph-matrix.ico';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showFeedback('ICO file downloaded! (Note: Basic format)', 'success');
+    }, 'image/png');
+}
+
+async function copyTextToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showFeedback('Copied to clipboard!', 'success');
+    } catch (err) {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            showFeedback('Copied to clipboard!', 'success');
+        } catch (err) {
+            showFeedback('Failed to copy to clipboard', 'error');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+}
+
+function downloadDataFile() {
+    const format = dataFormat.value;
+    const content = dataOutput.value;
+    let filename = 'glyph-matrix-data';
+    let mimeType = 'text/plain';
+    
+    if (format === 'json') {
+        filename += '.json';
+        mimeType = 'application/json';
+    } else if (format === 'array') {
+        filename += '.js';
+        mimeType = 'text/javascript';
+    } else {
+        filename += '.txt';
+    }
+    
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showFeedback(`${format.toUpperCase()} file downloaded!`, 'success');
+}
+
+// Social media sharing functions
+async function shareToTwitter() {
+    const canvas = createExportCanvas(4, 'transparent', '#000000', 'rounded', parseInt(opacityThreshold.value) || 0);
+    
+    canvas.toBlob((blob) => {
+        // For Twitter, we'll create a data URL and copy it
+        const reader = new FileReader();
+        reader.onload = function() {
+            const text = encodeURIComponent('Check out my Glyph Matrix creation! Made with Glyph Matrix Editor');
+            const url = `https://twitter.com/intent/tweet?text=${text}`;
+            window.open(url, '_blank');
+            showFeedback('Twitter opened! Upload your image manually.', 'success');
+        };
+        reader.readAsDataURL(blob);
+    }, 'image/png');
+}
+
+async function shareToFacebook() {
+    const text = encodeURIComponent('Check out my Glyph Matrix creation!');
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}&quote=${text}`;
+    window.open(url, '_blank');
+    showFeedback('Facebook opened! Upload your image manually.', 'success');
+}
+
+async function shareWithNativeAPI() {
+    if (!navigator.share) {
+        showFeedback('Native sharing not supported on this device', 'error');
+        return;
+    }
+    
+    const canvas = createExportCanvas(4, 'transparent', '#000000', 'rounded', parseInt(opacityThreshold.value) || 0);
+    
+    canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'glyph-matrix.png', { type: 'image/png' });
+        
+        try {
+            await navigator.share({
+                title: 'Glyph Matrix Creation',
+                text: 'Check out my pixel art creation!',
+                files: [file]
+            });
+            showFeedback('Shared successfully!', 'success');
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                showFeedback('Sharing failed', 'error');
+            }
+        }
+    }, 'image/png');
+}
+
+async function copyImageAsLink() {
+    const canvas = createExportCanvas(4, 'transparent', '#000000', 'rounded', parseInt(opacityThreshold.value) || 0);
+    
+    canvas.toBlob(async (blob) => {
+        try {
+            const item = new ClipboardItem({ 'image/png': blob });
+            await navigator.clipboard.write([item]);
+            showFeedback('Image copied to clipboard!', 'success');
+        } catch (err) {
+            // Fallback: create data URL
+            const reader = new FileReader();
+            reader.onload = function() {
+                copyTextToClipboard(reader.result);
+            };
+            reader.readAsDataURL(blob);
+        }
+    }, 'image/png');
+}
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
@@ -2547,6 +3455,120 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSliderPair(fontSizeSlider, fontSizeValue, updateFontSize, defaultValues.fontSize);
     setupSliderPair(emojiSizeSlider, emojiSizeValue, updateEmojiSize, defaultValues.emojiSize);
     
+    // Initialize export modal functionality
+    initializeExportModal();
+    
     updateOpacity(); // Initialize opacity preview
     updateHistoryButtons(); // Initialize history buttons
 });
+
+// Initialize export modal event listeners
+function initializeExportModal() {
+    // Tab switching
+    exportTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.getAttribute('data-tab');
+            switchExportTab(tabName);
+        });
+    });
+    
+    // Image export controls
+    imageFormat.addEventListener('change', () => {
+        updateQualityVisibility();
+        updateExportPreview();
+    });
+    
+    imageScale.addEventListener('change', updateExportPreview);
+    imageBg.addEventListener('change', () => {
+        updateCustomColorVisibility();
+        updateExportPreview();
+    });
+    customBgColor.addEventListener('change', () => {
+        // Auto-switch to "Custom" if color doesn't match predefined options
+        const colorValue = customBgColor.value.toLowerCase();
+        
+        if (colorValue !== '#000000' && colorValue !== '#ffffff' && colorValue !== '#808080') {
+            imageBg.value = 'custom';
+        }
+        
+        updateExportPreview();
+    });
+    pixelStyle.addEventListener('change', updateExportPreview);
+    
+    // Brightness threshold slider sync
+    setupSliderPair(opacityThreshold, opacityThresholdValue, updateExportPreview, 0);
+    
+    // Quality slider sync
+    setupSliderPair(imageQuality, imageQualityValue, updateExportPreview, 90);
+    
+    // Download buttons
+    downloadImageBtn.addEventListener('click', downloadImage);
+    downloadAnimationBtn.addEventListener('click', () => {
+        const format = animationFormat.value;
+        if (format === 'gif') {
+            exportAsGif();
+        } else if (format === 'webm') {
+            exportAsWebM();
+        }
+    });
+    
+    // Data export
+    dataFormat.addEventListener('change', updateDataOutput);
+    copyDataBtn.addEventListener('click', () => {
+        copyTextToClipboard(dataOutput.value);
+    });
+    downloadDataBtn.addEventListener('click', downloadDataFile);
+    
+    // Social sharing
+    shareTwitter.addEventListener('click', shareToTwitter);
+    shareFacebook.addEventListener('click', shareToFacebook);
+    shareNative.addEventListener('click', shareWithNativeAPI);
+    copyImageLink.addEventListener('click', copyImageAsLink);
+    
+    // Preview play/pause button
+    if (previewPlayPauseBtn) {
+        previewPlayPauseBtn.addEventListener('click', toggleAnimationPreview);
+    }
+    
+    // Close modal when clicking outside
+    exportModal.addEventListener('click', (e) => {
+        if (e.target === exportModal) {
+            closeExportModalHandler();
+        }
+    });
+}
+
+
+function updateCustomColorVisibility() {
+    const bg = imageBg.value;
+    
+    // Always show the color input
+    customBgColor.style.display = 'inline-block';
+    
+    // Update color value based on selected background
+    switch(bg) {
+        case 'transparent':
+            customBgColor.value = '#808080'; // Gray to represent transparency
+            break;
+        case 'black':
+            customBgColor.value = '#000000';
+            break;
+        case 'white':
+            customBgColor.value = '#ffffff';
+            break;
+        case 'custom':
+            // Keep current custom color value
+            break;
+    }
+}
+
+function updateQualityVisibility() {
+    const format = imageFormat.value;
+    
+    // Only show quality control for formats that support it (JPEG and WebP)
+    if (format === 'jpg' || format === 'webp') {
+        qualityGroup.style.display = 'block';
+    } else {
+        qualityGroup.style.display = 'none';
+    }
+}

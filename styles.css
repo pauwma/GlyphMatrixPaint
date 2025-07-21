@@ -1304,6 +1304,31 @@ a:hover   { opacity: .8; }
     padding: 0 20px;
 }
 
+/* Export Button Section */
+.export-button-section {
+    border: 1px solid #333;
+    background: #000;
+    width: 100%;
+}
+
+.export-button-section .btn {
+    width: 100%;
+    margin-bottom: 0;
+    padding: 15px 20px;
+    border: none;
+    background: #111;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 0;
+}
+
+.export-button-section .btn:hover {
+    background: #fff;
+    color: #000;
+}
+
 /* Binary input styles */
 .binary-import-controls {
     margin-top: 15px;
@@ -1978,3 +2003,645 @@ a:hover   { opacity: .8; }
     border-color: #d32f2f;
 }
 /*---------- END - DANGER MODAL ----------*/
+
+
+/*---------- INI - EXPORT MODAL ----------*/
+#exportModal {
+    align-items: center;
+    justify-content: center;
+}
+
+.export-modal-content {
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.export-settings {
+    margin: 0 auto 20px auto;
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.export-settings.nomargin {
+    margin: 0 auto 0px auto;
+}
+
+.export-modal-content .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+}
+
+/* Export Tabs */
+.export-tabs {
+    display: flex;
+    border-bottom: 1px solid #333;
+    background: #000;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.export-tab {
+    flex: 1;
+    background: #111;
+    border: none;
+    color: #999;
+    padding: 15px 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-right: 1px solid #333;
+}
+
+.export-tab:last-child {
+    border-right: none;
+}
+
+.export-tab:hover {
+    background: #222;
+    color: #fff;
+}
+
+.export-tab.active {
+    background: #fff;
+    color: #000;
+}
+
+.tab-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* Tab Content */
+.export-tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.export-tab-content.active {
+    display: block;
+}
+
+/* Other tabs padding */
+.export-tab-padding {
+    padding: 0;
+}
+
+/* Image tab specific sticky layout */
+#imageTab {
+    position: relative;
+    padding: 0;
+}
+
+#imageTab.active {
+    height: auto;
+    max-height: 700px;
+    display: flex;
+    flex-direction: column;
+}
+
+.image-tab-scrollable {
+    flex: 0 0 auto;
+    overflow-y: auto;
+    padding: 20px;
+    padding-bottom: 20px;
+}
+
+/* Animation tab specific sticky layout */
+#animationTab {
+    position: relative;
+    padding: 0;
+}
+
+#animationTab.active {
+    height: auto;
+    max-height: 700px;
+    display: flex;
+    flex-direction: column;
+}
+
+.animation-tab-scrollable {
+    flex: 0 0 auto;
+    overflow-y: auto;
+    padding: 20px;
+    padding-bottom: 20px;
+}
+
+/* Data tab specific sticky layout */
+#dataTab {
+    position: relative;
+    padding: 0;
+}
+
+#dataTab.active {
+    height: auto;
+    max-height: 700px;
+    display: flex;
+    flex-direction: column;
+}
+
+.data-tab-scrollable {
+    flex: 0 0 auto;
+    overflow-y: auto;
+    padding: 20px;
+    padding-bottom: 20px;
+}
+
+.image-tab-sticky-footer {
+    position: sticky;
+    bottom: 0;
+    background: #111;
+    border-top: 1px solid #333;
+    padding: 15px 20px;
+    z-index: 10;
+    margin-top: auto;
+}
+
+.image-tab-sticky-footer .export-download-btn {
+    margin-bottom: 0;
+}
+
+/* Export Preview */
+.export-preview {
+    background: #111;
+    border: 1px solid #333;
+    padding: 10px;
+    padding-top: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.preview-play-pause-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+}
+
+.preview-play-pause-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 1;
+}
+
+.preview-btn-icon {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+}
+
+#exportPreviewCanvas {
+    width: 200px;
+    height: 200px;
+    border: 1px solid #333;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    object-fit: contain;
+}
+
+.preview-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0px;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.setting-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    width: 100%;
+    max-width: 340px;
+}
+
+.setting-group:last-child {
+    margin-bottom: 0px;
+}
+
+.setting-group label {
+    font-size: 0.75rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    width: 120px;
+    margin: 0;
+    flex-shrink: 0;
+    text-align: left;
+}
+
+.export-select {
+    width: 200px;
+    height: 40px;
+    background: #111;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    border-radius: 0;
+    outline: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.export-select:focus {
+    border-color: #fff;
+}
+
+.export-slider {
+    flex: 1;
+    height: 2px;
+    background: #333;
+    border-radius: 1px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    min-width: 140px;
+}
+
+.export-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.export-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.export-input {
+    width: 60px;
+    background: #111;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    border-radius: 0;
+    outline: none;
+}
+
+.export-input:focus {
+    border-color: #fff;
+}
+
+.unit {
+    font-size: 0.7rem;
+    color: #666;
+    min-width: 20px;
+    margin-left: 0px;
+}
+
+/* Color input styling */
+input[type="color"] {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #333;
+    background: #111;
+    cursor: pointer;
+    border-radius: 0;
+    outline: none;
+    flex-shrink: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+input[type="color"]:focus {
+    border-color: #fff;
+}
+
+/* Container for slider + input combos */
+.setting-group .export-slider + .export-input {
+    margin-left: 8px;
+}
+
+/* Nested slider-group within setting-group */
+.setting-group .slider-group {
+    margin-bottom: 0;
+    width: 100%;
+    flex: 1;
+}
+
+.setting-group .slider-label {
+    min-width: 80px;
+    font-size: 0.75rem;
+}
+
+/* Remove spinner arrows from number inputs */
+.export-input::-webkit-outer-spin-button,
+.export-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.export-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* Make slider controls fill available space like other setting-group content */
+.setting-group .export-slider {
+    flex: 1;
+}
+
+/* Input with unit styling */
+.input-with-unit {
+    position: relative;
+    display: inline-block;
+}
+
+.input-with-unit .export-input {
+    padding-right: 20px;
+}
+
+.input-unit {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: #666;
+    pointer-events: none;
+}
+
+/* Background setting with integrated color picker */
+.setting-group:has(#imageBg) {
+    gap: 0;
+}
+
+.setting-group:has(#imageBg) label {
+    margin-right: 12px;
+}
+
+.setting-group:has(#imageBg) .export-select {
+    width: 160px;
+    border-right: none;
+}
+
+.setting-group:has(#imageBg) #customBgColor {
+    border-left: none;
+    margin-left: 0;
+}
+
+/* Export Buttons */
+.export-download-btn {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.export-buttons .btn {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+#dataOutput {
+    width: 100%;
+    height: 200px;
+    background: #111;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 12px;
+    font-size: 0.75rem;
+    font-family: 'Courier New', monospace;
+    border-radius: 0;
+    outline: none;
+    resize: vertical;
+    line-height: 1.4;
+}
+
+#dataOutput:focus {
+    border-color: #fff;
+}
+
+/* Share Options */
+.share-options {
+    padding: 0;
+}
+
+.share-preset {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.share-preset label {
+    font-size: 0.75rem;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 80px;
+    margin: 0;
+}
+
+.share-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.social-btn {
+    margin-bottom: 0;
+    padding: 12px 16px;
+    font-size: 0.75rem;
+}
+
+.twitter-btn:hover {
+    background: #1da1f2;
+    border-color: #1da1f2;
+    color: #fff;
+}
+
+.facebook-btn:hover {
+    background: #4267b2;
+    border-color: #4267b2;
+    color: #fff;
+}
+
+.share-info {
+    background: #111;
+    border: 1px solid #333;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.share-info p {
+    font-size: 0.75rem;
+    color: #666;
+    margin: 0;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .export-modal-content {
+        max-width: 95%;
+        margin: 10px auto;
+        max-height: 85vh;
+    }
+    
+    #imageTab.active {
+        height: auto;
+        max-height: 85vh;
+    }
+
+    .export-tab {
+        padding: 12px 8px;
+        font-size: 0.7rem;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .tab-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .export-tab-content {
+        padding: 15px;
+    }
+    
+    .image-tab-scrollable {
+        padding: 15px;
+        padding-bottom: 15px;
+    }
+    
+    .image-tab-sticky-footer {
+        padding: 12px 15px;
+    }
+
+    .export-settings {
+        max-width: 320px;
+    }
+
+    .setting-group {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        max-width: 300px;
+    }
+
+    .setting-group label {
+        width: 80px;
+        font-size: 0.7rem;
+        margin-bottom: 0;
+    }
+    
+    .export-select {
+        width: 200px;
+        height: 36px;
+        padding: 6px 10px;
+    }
+    
+    .export-slider {
+        min-width: 120px;
+    }
+    
+    .export-input {
+        width: 50px;
+    }
+    
+    input[type="color"] {
+        width: 36px;
+        height: 36px;
+    }
+
+    .setting-group:has(#imageBg) .export-select {
+        width: 164px;
+    }
+
+    .share-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .export-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .preview-info {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .export-modal-content {
+        max-width: 90%;
+        max-height: 80vh;
+    }
+    
+    #imageTab.active {
+        height: auto;
+        max-height: 80vh;
+    }
+
+    .export-tab {
+        padding: 10px 6px;
+        font-size: 0.65rem;
+    }
+
+    .tab-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .export-tab-content {
+        padding: 12px;
+    }
+    
+    .image-tab-scrollable {
+        padding: 12px;
+        padding-bottom: 12px;
+    }
+    
+    .image-tab-sticky-footer {
+        padding: 10px 12px;
+    }
+}
+/*---------- END - EXPORT MODAL ----------*/

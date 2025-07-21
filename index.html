@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="img/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="img/favicon/favicon-16x16.png">
-    <link rel="manifest" href="/img/site.webmanifest">
+    <link rel="manifest" href="img/favicon/site.webmanifest">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -188,7 +188,7 @@
                             </button>
                             <button class="btn action-btn" id="binaryBtn">
                                 <i data-feather="file-text" class="btn-icon"></i>
-                                Raw Data
+                                Pixel Data
                             </button>
                         </div>
                         
@@ -338,12 +338,12 @@
                         <!-- Binary Import Section -->
                         <div class="import-controls" id="binaryImportControls" style="display: none;">
                             <div class="input-group nomargin">
-                                <label>Binary Data:</label>
-                                <textarea id="binaryInput" placeholder="Paste binary data here..." rows="4"></textarea>
+                                <label>Pixel Data:</label>
+                                <textarea id="binaryInput" placeholder="Paste pixel data here..." rows="4"></textarea>
                             </div>
                             <button class="btn last" id="applyBinaryBtn">
                                 <i data-feather="check" class="btn-icon"></i>
-                                Apply Raw Data
+                                Apply Pixel Data
                             </button>
                         </div>
 
@@ -367,23 +367,233 @@
                     </div>
                 </div>
 
-                <div class="control-section collapsed">
-                    <div class="control-header">
-                        <h3>Export</h3>
+                
+                <div class="export-button-section">
+                    <button class="btn primary" id="exportBtn">
+                        <i data-feather="download" class="btn-icon"></i>
+                        Export & Share
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="text-modal" id="exportModal" style="display: none;">
+        <div class="modal-content export-modal-content">
+            <div class="modal-header">
+                <h3>Export & Share</h3>
+                <button class="modal-close" id="closeExportModal">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Export Tabs -->
+                <div class="export-tabs">
+                    <button class="export-tab active" data-tab="image">
+                        <i data-feather="image" class="tab-icon"></i>
+                        Image
+                    </button>
+                    <button class="export-tab" data-tab="animation">
+                        <i data-feather="film" class="tab-icon"></i>
+                        Animation
+                    </button>
+                    <button class="export-tab" data-tab="data">
+                        <i data-feather="file-text" class="tab-icon"></i>
+                        Data
+                    </button>
+                    <button class="export-tab" data-tab="share" style="display: none;">
+                        <i data-feather="share-2" class="tab-icon"></i>
+                        Share
+                    </button>
+                </div>
+
+                <!-- Image Export Tab -->
+                <div class="export-tab-content active" id="imageTab">
+                    <div class="image-tab-scrollable">
+                        <div class="export-preview">
+                            <canvas id="exportPreviewCanvas"></canvas>
+                            <div class="preview-info">
+                                <span id="previewSize">Size: 0×0</span>
+                                <span id="previewFormat">Format: PNG</span>
+                            </div>
+                        </div>
+
+                        <div class="export-settings nomargin">
+                            <div class="setting-group">
+                                <label>Format:</label>
+                                <select id="imageFormat" class="export-select">
+                                    <option value="png">PNG</option>
+                                    <option value="jpg">JPEG</option>
+                                    <option value="webp">WebP</option>
+                                    <option value="svg">SVG</option>
+                                    <option value="ico">ICO</option>
+                                </select>
+                            </div>
+
+                            <div class="setting-group">
+                                <label>Scale:</label>
+                                <select id="imageScale" class="export-select">
+                                    <option value="1">1× (Original)</option>
+                                    <option value="2">2× (2x Larger)</option>
+                                    <option value="4" selected>4× (4x Larger)</option>
+                                    <option value="8">8× (8x Larger)</option>
+                                    <option value="16">16× (16x Larger)</option>
+                                </select>
+                            </div>
+
+                            <div class="setting-group" id="qualityGroup">
+                                <div class="slider-group">
+                                    <label class="slider-label">Quality</label>
+                                    <input type="range" id="imageQuality" min="10" max="100" value="90" class="export-slider">
+                                    <div class="input-with-unit">
+                                        <input type="number" id="imageQualityValue" min="10" max="100" value="90" class="export-input">
+                                        <span class="input-unit">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-group">
+                                <label>Background:</label>
+                                <select id="imageBg" class="export-select">
+                                    <option value="transparent">Transparent</option>
+                                    <option value="black">Black</option>
+                                    <option value="white">White</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                                <input type="color" id="customBgColor" value="#000000">
+                            </div>
+
+                            <div class="setting-group">
+                                <label>Pixel Style:</label>
+                                <select id="pixelStyle" class="export-select">
+                                    <option value="rounded" selected>Rounded</option>
+                                    <option value="square">Square</option>
+                                    <option value="circle">Circle</option>
+                                </select>
+                            </div>
+
+
+                            <div class="setting-group">
+                                <div class="slider-group">
+                                    <label class="slider-label">Brightness Threshold</label>
+                                    <input type="range" id="opacityThreshold" min="0" max="255" value="0" class="export-slider">
+                                    <input type="number" id="opacityThresholdValue" min="0" max="255" value="0" class="export-input">
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="control-content">
-                        <button class="btn primary" id="downloadBtn">
-                                <i data-feather="download" class="btn-icon"></i>
-                            Download as Image
+
+                    <div class="image-tab-sticky-footer">
+                        <button class="btn primary export-download-btn" id="downloadImageBtn">
+                            <i data-feather="download" class="btn-icon"></i>
+                            Download Image
                         </button>
-                        <button class="btn primary" id="exportGifBtn">
-                                <i data-feather="film" class="btn-icon"></i>
-                            Export as GIF
+                    </div>
+                </div>
+
+                <!-- Animation Export Tab -->
+                <div class="export-tab-content" id="animationTab">
+                    <div class="animation-tab-scrollable">
+                        <div class="export-preview">
+                            <canvas id="animationPreviewCanvas"></canvas>
+                            <button class="preview-play-pause-btn" id="previewPlayPauseBtn">
+                                <i data-feather="play" class="preview-btn-icon"></i>
+                            </button>
+                            <div class="preview-info">
+                                <span id="animationPreviewInfo">Animation Preview</span>
+                            </div>
+                        </div>
+
+                        <div class="export-settings nomargin">
+                            <div class="setting-group">
+                                <label>Format:</label>
+                                <select id="animationFormat" class="export-select">
+                                    <option value="gif">GIF</option>
+                                    <option value="webm">WebM</option>
+                                </select>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="image-tab-sticky-footer">
+                        <button class="btn primary export-download-btn" id="downloadAnimationBtn">
+                            <i data-feather="film" class="btn-icon"></i>
+                            Export Animation
                         </button>
-                        <button class="btn primary" id="copyBtn">
+                    </div>
+                </div>
+
+                <!-- Data Export Tab -->
+                <div class="export-tab-content" id="dataTab">
+                    <div class="data-tab-scrollable">
+                        <div class="export-settings">
+                            <div class="setting-group">
+                                <label>Format:</label>
+                                <select id="dataFormat" class="export-select">
+                                    <option value="binary">Pixel Data</option>
+                                    <option value="json">JSON</option>
+                                    <option value="array">JavaScript Array</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="data-output">
+                            <textarea id="dataOutput" readonly></textarea>
+                        </div>
+                    </div>
+
+                    <div class="image-tab-sticky-footer">
+                        <div class="export-buttons">
+                            <button class="btn primary export-download-btn" id="copyDataBtn">
                                 <i data-feather="copy" class="btn-icon"></i>
-                            Copy Raw
-                        </button>
+                                Copy to Clipboard
+                            </button>
+                            <button class="btn export-download-btn" id="downloadDataBtn">
+                                <i data-feather="download" class="btn-icon"></i>
+                                Download File
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share Tab -->
+                <div class="export-tab-content" id="shareTab" style="display: none;">
+                    <div class="export-tab-padding">
+                        <div class="share-options">
+                            <div class="share-preset">
+                                <label>Optimize for:</label>
+                                <select id="sharePreset" class="export-select">
+                                    <option value="general">General</option>
+                                    <option value="twitter">Twitter</option>
+                                    <option value="instagram">Instagram</option>
+                                    <option value="facebook">Facebook</option>
+                                    <option value="discord">Discord</option>
+                                </select>
+                            </div>
+
+                            <div class="share-buttons">
+                                <button class="btn social-btn twitter-btn" id="shareTwitter">
+                                    <i data-feather="twitter" class="btn-icon"></i>
+                                    Share on Twitter
+                                </button>
+                                <button class="btn social-btn facebook-btn" id="shareFacebook">
+                                    <i data-feather="facebook" class="btn-icon"></i>
+                                    Share on Facebook
+                                </button>
+                                <button class="btn social-btn" id="shareNative">
+                                    <i data-feather="share" class="btn-icon"></i>
+                                    Share (Native)
+                                </button>
+                                <button class="btn social-btn" id="copyImageLink">
+                                    <i data-feather="link" class="btn-icon"></i>
+                                    Copy Image Link
+                                </button>
+                            </div>
+
+                            <div class="share-info">
+                                <p>Social media sharing will generate optimized images for each platform.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

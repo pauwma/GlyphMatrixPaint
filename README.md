@@ -33,12 +33,12 @@
 - **Text-to-Pixel**: Convert text using custom pixel fonts (Ndot57, NType82, Ranyth)
 - **Emoji-to-Pixel**: Transform emojis into pixel art
 - **GIFs**: Transform animations directly into the matrix
-- **Raw Data**: Transform raw matrix back into design
+- **Pixel Data**: Transform pixel data back into design
 
 ### ⬆️ Export Formats
 - **PNG Download**: High-quality image export for sharing
 - **Animation Export**: Export complete animations into GIF
-- **Raw Data**: Share with easy a matrix design in a raw format
+- **Pixel Data**: Share matrix design in pixel data format
 
 <br/>
 
