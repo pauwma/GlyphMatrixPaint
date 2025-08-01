@@ -8,8 +8,24 @@
 
 ## 🆕 What's New
 
-> **Latest Updates** - Recently added animation support
+### Latest Updates
 
+- 💾 **Auto-Save & Restore** - Never lose your work with automatic session saving and restore prompts
+- 🎨 **Eyedropper Tool** - Sample pixel opacity values from your existing artwork
+<br/>
+<br/>
+
+<div align="center">
+
+<a href="https://pauwma.github.io/GlyphMatrixPaint/">
+<img src="img/media/restore_session.png" alt="Auto-Save Restore" width="400">
+</a>
+
+</div>
+
+[![Eyedropper Tool](/img/media/eyedropper.gif)](https://pauwma.github.io/GlyphMatrixPaint/)
+
+### Other Recent Updates
 - 🎞️ **Animation** - Build a timeline to animate your designs 
 - 🎬 **GIF Import Support** - Transform animated GIFs directly into matrix animations
 - 📤 **GIF Export** - Export your animations as GIF files for easy sharing

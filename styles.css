@@ -3057,3 +3057,156 @@ input[type="color"]:focus {
     }
 }
 /*---------- END - ADVANCED IMPORT MODAL ----------*/
+
+/*---------- INI - RESTORE SESSION MODAL ----------*/
+.restore-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(10px);
+}
+
+.restore-modal .modal-content {
+    background: #111;
+    border: 1px solid #333;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 0;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.restore-modal .modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #222;
+}
+
+.restore-modal .modal-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+.restore-modal .modal-body {
+    padding: 20px;
+}
+
+.restore-info {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.restore-info p {
+    color: #aaa;
+    margin: 5px 0;
+}
+
+.restore-info .saved-date {
+    font-size: 0.85rem;
+    color: #777;
+}
+
+.restore-preview {
+    width: 100%;
+    height: 200px;
+    background: #000;
+    border: 1px solid #222;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.restore-preview canvas {
+    max-width: 100%;
+    max-height: 100%;
+    image-rendering: pixelated;
+}
+
+.restore-details {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid #222;
+}
+
+.detail-item {
+    text-align: center;
+}
+
+.detail-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #777;
+    margin-bottom: 5px;
+}
+
+.detail-item span:last-child {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.restore-modal .modal-footer {
+    padding: 20px;
+    border-top: 1px solid #222;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.restore-modal .btn {
+    flex: 1;
+    max-width: 200px;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+}
+
+.restore-modal .btn.primary {
+    background: #0077ff;
+    color: #fff;
+}
+
+.restore-modal .btn.primary:hover {
+    background: #0066dd;
+}
+
+.restore-modal .btn.secondary {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #444;
+}
+
+.restore-modal .btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #666;
+}
+
+@media (max-width: 600px) {
+    .restore-modal .modal-content {
+        max-width: 95%;
+    }
+    
+    .restore-preview {
+        height: 150px;
+    }
+    
+    .restore-modal .modal-footer {
+        flex-direction: column;
+    }
+    
+    .restore-modal .btn {
+        max-width: 100%;
+    }
+}
+/*---------- END - RESTORE SESSION MODAL ----------*/

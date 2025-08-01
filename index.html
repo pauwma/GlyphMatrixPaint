@@ -760,6 +760,44 @@
         </div>
     </div>
 
+    <!-- Restore Session Modal -->
+    <div class="restore-modal" id="restoreModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Previous Session Found</h3>
+            </div>
+            <div class="modal-body">
+                <div class="restore-info">
+                    <p>We found a saved session from your previous work.</p>
+                    <p id="savedDate" class="saved-date"></p>
+                </div>
+                <div class="restore-preview" id="restorePreview">
+                    <!-- Preview will be generated dynamically -->
+                </div>
+                <div class="restore-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Frames:</span>
+                        <span id="savedFrameCount">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Active Pixels:</span>
+                        <span id="savedPixelCount">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn primary" id="restoreSessionBtn">
+                    <i data-feather="refresh-cw" class="btn-icon"></i>
+                    Restore Session
+                </button>
+                <button class="btn secondary" id="startFreshBtn">
+                    <i data-feather="file" class="btn-icon"></i>
+                    Start Fresh
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="emojiNames.js"></script>
     <script src="script.js"></script>
 </body>

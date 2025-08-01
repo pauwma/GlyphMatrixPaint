@@ -244,6 +244,259 @@ function pauseAnimationIfPlaying() {
     }
 }
 
+// LocalStorage save/load functions
+const STORAGE_KEY = 'glyphMatrixPaint_session';
+let saveTimeout = null;
+
+function saveToLocalStorage() {
+    try {
+        // Convert Map to array for serialization
+        const pixelOpacitiesArray = Array.from(pixelOpacities.entries());
+        
+        // Convert frames with Maps to serializable format
+        const serializableFrames = frames.map(frame => ({
+            pixels: Array.from(frame.pixels.entries()),
+            duration: frame.duration,
+            history: frame.history.map(h => Array.from(h.entries())),
+            historyIndex: frame.historyIndex
+        }));
+        
+        const sessionData = {
+            pixelOpacities: pixelOpacitiesArray,
+            frames: serializableFrames,
+            currentFrameIndex: currentFrameIndex,
+            frameDuration: frameDuration,
+            brushOpacity: brushOpacity,
+            timestamp: Date.now()
+        };
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+    } catch (e) {
+        console.error('Failed to save session:', e);
+    }
+}
+
+function loadFromLocalStorage() {
+    try {
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (!savedData) return null;
+        
+        const sessionData = JSON.parse(savedData);
+        
+        // Convert arrays back to Maps
+        sessionData.pixelOpacities = new Map(sessionData.pixelOpacities);
+        
+        // Convert frames back to proper format
+        sessionData.frames = sessionData.frames.map(frame => ({
+            pixels: new Map(frame.pixels),
+            duration: frame.duration,
+            history: frame.history.map(h => new Map(h)),
+            historyIndex: frame.historyIndex
+        }));
+        
+        return sessionData;
+    } catch (e) {
+        console.error('Failed to load session:', e);
+        return null;
+    }
+}
+
+function clearSavedData() {
+    localStorage.removeItem(STORAGE_KEY);
+}
+
+// Debounced auto-save function
+function autoSave() {
+    if (saveTimeout) {
+        clearTimeout(saveTimeout);
+    }
+    saveTimeout = setTimeout(() => {
+        saveToLocalStorage();
+    }, 500); // Save after 500ms of no activity
+}
+
+// Function to restore session data
+function restoreSession(sessionData) {
+    console.log('Restoring session:', sessionData);
+    
+    // Restore pixel opacities
+    pixelOpacities = sessionData.pixelOpacities;
+    
+    // Restore frames
+    frames = sessionData.frames;
+    currentFrameIndex = sessionData.currentFrameIndex;
+    frameDuration = sessionData.frameDuration;
+    brushOpacity = sessionData.brushOpacity;
+    
+    // Update UI
+    opacitySlider.value = brushOpacity;
+    opacityValue.value = brushOpacity;
+    updateOpacity();
+    
+    // Update duration slider if on the current frame
+    if (frames[currentFrameIndex]) {
+        durationSlider.value = frames[currentFrameIndex].duration;
+        durationValue.textContent = frames[currentFrameIndex].duration + 'ms';
+    }
+    
+    // Load current frame pixels
+    if (frames[currentFrameIndex]) {
+        const currentFrame = frames[currentFrameIndex];
+        pixelOpacities = new Map(currentFrame.pixels);
+        frameDuration = currentFrame.duration;
+    }
+    
+    // Update all displays
+    updateFramesDisplay();
+    updateDisplay();
+    updateHistoryButtons();
+    
+    console.log('Session restored successfully');
+}
+
+// Function to show restore modal
+function showRestoreModal(sessionData) {
+    const modal = document.getElementById('restoreModal');
+    const savedDate = document.getElementById('savedDate');
+    const savedFrameCount = document.getElementById('savedFrameCount');
+    const savedPixelCount = document.getElementById('savedPixelCount');
+    const restorePreview = document.getElementById('restorePreview');
+    
+    // Store session data globally for restore button
+    pendingSessionData = sessionData;
+    console.log('Showing restore modal with data:', sessionData);
+    
+    // Format saved date
+    const date = new Date(sessionData.timestamp);
+    savedDate.textContent = `Saved on ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+    
+    // Update details
+    savedFrameCount.textContent = sessionData.frames.length;
+    
+    // Count active pixels in current frame
+    let activePixels = 0;
+    sessionData.pixelOpacities.forEach(opacity => {
+        if (opacity > 0) activePixels++;
+    });
+    savedPixelCount.textContent = activePixels;
+    
+    // Add frame indicator if multiple frames
+    if (sessionData.frames.length > 1) {
+        const frameInfo = document.createElement('p');
+        frameInfo.textContent = `Showing frame ${sessionData.currentFrameIndex + 1} of ${sessionData.frames.length}`;
+        frameInfo.style.fontSize = '0.85rem';
+        frameInfo.style.color = '#888';
+        frameInfo.style.marginTop = '5px';
+        const restoreInfo = document.querySelector('.restore-info');
+        restoreInfo.appendChild(frameInfo);
+    }
+    
+    // Generate preview of the first frame
+    generateSessionPreview(sessionData, restorePreview);
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Initialize feather icons in modal
+    feather.replace();
+}
+
+// Function to generate preview canvas
+function generateSessionPreview(sessionData, container) {
+    container.innerHTML = '';
+    
+    const canvas = document.createElement('canvas');
+    const scale = 6;
+    canvas.width = gridSize * scale;
+    canvas.height = gridSize * scale;
+    const ctx = canvas.getContext('2d');
+    
+    // Fill background
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw the matrix shape outline first
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 1;
+    
+    for (let row = 0; row < gridSize; row++) {
+        const rowWidth = shapePattern[row] || 0;
+        const startCol = Math.floor((gridSize - rowWidth) / 2);
+        
+        for (let col = startCol; col < startCol + rowWidth; col++) {
+            ctx.strokeRect(col * scale, row * scale, scale - 1, scale - 1);
+        }
+    }
+    
+    // Draw pixels from the current frame (the one the user was working on)
+    const currentFrame = sessionData.frames[sessionData.currentFrameIndex];
+    if (currentFrame) {
+        console.log(`Drawing preview of frame ${sessionData.currentFrameIndex + 1}/${sessionData.frames.length} with ${currentFrame.pixels.size} pixels`);
+        currentFrame.pixels.forEach((opacity, key) => {
+            if (opacity > 0) {
+                const [row, col] = key.split('-').map(Number); // Changed from ',' to '-'
+                const rowWidth = shapePattern[row] || 0;
+                const startCol = Math.floor((gridSize - rowWidth) / 2);
+                const endCol = startCol + rowWidth - 1;
+                
+                // Only draw if pixel is within the shape bounds
+                if (col >= startCol && col <= endCol) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${opacity / 255})`;
+                    ctx.fillRect(col * scale + 1, row * scale + 1, scale - 3, scale - 3);
+                }
+            }
+        });
+    } else {
+        console.log('No frame data to preview');
+    }
+    
+    container.appendChild(canvas);
+}
+
+// Global variable to store session data for restore
+let pendingSessionData = null;
+
+// Setup restore modal event handlers
+function setupRestoreModalHandlers() {
+    const restoreBtn = document.getElementById('restoreSessionBtn');
+    const startFreshBtn = document.getElementById('startFreshBtn');
+    const modal = document.getElementById('restoreModal');
+    
+    restoreBtn.addEventListener('click', () => {
+        console.log('Restore button clicked', pendingSessionData);
+        if (pendingSessionData) {
+            // Hide modal
+            modal.style.display = 'none';
+            
+            // Initialize grid first if not already done
+            if (pixels.length === 0) {
+                initializeGrid();
+            }
+            
+            // Restore the session
+            restoreSession(pendingSessionData);
+            
+            // Clear the pending data
+            pendingSessionData = null;
+        }
+    });
+    
+    startFreshBtn.addEventListener('click', () => {
+        console.log('Start fresh button clicked');
+        // Hide modal
+        modal.style.display = 'none';
+        
+        // Clear saved data
+        clearSavedData();
+        
+        // Initialize fresh grid
+        initializeGrid();
+        initializeAnimation();
+        
+        pendingSessionData = null;
+    });
+}
+
 // Animation functions
 function initializeAnimation() {
     // Create first frame with current state and its own history
@@ -263,6 +516,7 @@ function initializeAnimation() {
     updateFramesDisplay();
     updateDurationDisplay();
     updateHistoryButtons();
+    autoSave();
 }
 
 function createNewFrame() {
@@ -292,6 +546,7 @@ function createNewFrame() {
     updateFramesDisplay();
     updateDurationDisplay();
     updateHistoryButtons();
+    autoSave();
 }
 
 function duplicateCurrentFrame() {
@@ -315,6 +570,7 @@ function duplicateCurrentFrame() {
     updateFramesDisplay();
     updateDurationDisplay();
     updateHistoryButtons();
+    autoSave();
 }
 
 
@@ -1146,6 +1402,7 @@ function finishDrawingSession() {
         
         if (hasChanges) {
             saveToHistory();
+            autoSave();
         }
         
         currentDrawingSession = null;
@@ -1353,6 +1610,7 @@ function fillAll() {
     
     saveToHistory();
     updateDisplay();
+    autoSave();
 }
 
 function eraseAll() {
@@ -1360,6 +1618,7 @@ function eraseAll() {
     pixelOpacities.clear();
     saveToHistory();
     updateDisplay();
+    autoSave();
 }
 
 function reverse() {
@@ -1381,6 +1640,7 @@ function reverse() {
     pixelOpacities = newOpacities;
     saveToHistory();
     updateDisplay();
+    autoSave();
 }
 
 // Transform functions
@@ -1401,6 +1661,7 @@ function flipHorizontal() {
     pixelOpacities = newOpacities;
     saveToHistory();
     updateDisplay();
+    autoSave();
 }
 
 function flipVertical() {
@@ -1429,6 +1690,7 @@ function flipVertical() {
     pixelOpacities = newOpacities;
     saveToHistory();
     updateDisplay();
+    autoSave();
 }
 
 function rotate90() {
@@ -1463,6 +1725,7 @@ function rotate90() {
     pixelOpacities = newOpacities;
     saveToHistory();
     updateDisplay();
+    autoSave();
 }
 
 // Display update functions
@@ -1944,6 +2207,7 @@ function applyImageToPixels() {
 
     saveToHistory();
     updateDisplay();
+    autoSave();
 }
 
 // GIF Import Functions
@@ -3630,8 +3894,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Feather Icons
     feather.replace();
     
-    initializeGrid();
-    initializeAnimation();
+    // Setup restore modal event handlers first
+    setupRestoreModalHandlers();
+    
+    // Check for saved session data
+    const savedSession = loadFromLocalStorage();
+    
+    if (savedSession) {
+        // Show restore modal if saved data exists
+        showRestoreModal(savedSession);
+    } else {
+        // Normal initialization if no saved data
+        initializeGrid();
+        initializeAnimation();
+    }
+    
     createImageCanvas();
     initCollapsibleControls();
     initFramesScrolling();
