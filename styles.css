@@ -478,7 +478,61 @@ a:hover   { opacity: .8; }
     background: #fff;
     border: 1px solid #333;
     border-radius: 2px;
-    margin-left: 10px;
+    margin-left: 0px;
+}
+
+.eyedropper-btn {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 0px;
+}
+
+.eyedropper-btn:hover {
+    background: #222;
+    border-color: #555;
+}
+
+.eyedropper-btn.active {
+    background: #fff;
+    border-color: #fff;
+}
+
+.eyedropper-btn.active .btn-icon {
+    stroke: #000;
+}
+
+.eyedropper-btn .btn-icon {
+    width: 12px;
+    height: 12px;
+    stroke: #fff;
+    transition: stroke 0.2s ease;
+}
+
+.grid-container.eyedropper-active .pixel:not(.inactive) {
+    cursor: crosshair;
+}
+
+.opacity-hover-preview {
+    position: absolute;
+    background: #000;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    pointer-events: none;
+    z-index: 1000;
+    border: 1px solid #333;
+    white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -489,6 +543,17 @@ a:hover   { opacity: .8; }
 
     .brush-opacity {
         padding-top: 15px;
+    }
+    
+    .eyedropper-btn {
+        width: 18px;
+        height: 18px;
+        margin-left: 4px;
+    }
+    
+    .eyedropper-btn .btn-icon {
+        width: 10px;
+        height: 10px;
     }
 }
 /*---------- END - BRUSH MODE ----------*/
@@ -2645,3 +2710,350 @@ input[type="color"]:focus {
     }
 }
 /*---------- END - EXPORT MODAL ----------*/
+
+/*---------- ADVANCED IMPORT MODAL ----------*/
+.advanced-import-modal-content {
+    max-width: 600px;
+    width: 95%;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.advanced-import-modal-content .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.import-tabs {
+    display: flex;
+    border-bottom: 1px solid #333;
+    background: #1a1a1a;
+    flex-shrink: 0;
+}
+
+.import-tab {
+    flex: 1;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.import-tab:hover {
+    background: #222;
+    color: #fff;
+}
+
+.import-tab.active {
+    color: #4CAF50;
+    border-bottom-color: #4CAF50;
+    background: #111;
+}
+
+.import-tab .tab-icon {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+}
+
+.import-tab-content {
+    display: none;
+    padding: 20px;
+}
+
+.import-tab-content.active {
+    display: block;
+}
+
+.advanced-preview-section {
+    padding: 0 20px 20px 20px;
+    border-bottom: 1px solid #333;
+    background: #0a0a0a;
+}
+
+.preview-container {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    margin: 0 auto 12px auto;
+    border: 1px solid #333;
+    background: #000;
+    border-radius: 4px;
+}
+
+#advancedPreviewCanvas {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    border-radius: 3px;
+}
+
+.matrix-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.overlay-grid {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: repeat(25, 1fr);
+    gap: 1px;
+}
+
+.overlay-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1px;
+}
+
+.overlay-pixel {
+    width: 8px;
+    height: 8px;
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 1px;
+    box-sizing: border-box;
+}
+
+#advancedPreviewInfo {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.upload-area, .paste-area, .url-area {
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-area {
+    border: 2px dashed #333;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.upload-area:hover {
+    border-color: #4CAF50;
+}
+
+.upload-area.dragover {
+    border-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.05);
+}
+
+.upload-content, .paste-content {
+    text-align: center;
+}
+
+.upload-icon, .paste-icon {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 12px auto;
+    color: #666;
+    stroke-width: 1.5;
+}
+
+.upload-content p, .paste-content p {
+    margin: 0 0 16px 0;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.url-area {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+}
+
+.advanced-controls {
+    padding: 20px;
+    border-top: 1px solid #333;
+    background: #0f0f0f;
+}
+
+.advanced-controls h4 {
+    margin: 0 0 16px 0;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.control-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.control-grid:last-child {
+    margin-bottom: 0;
+}
+
+.checkbox-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+.checkbox-label {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.position-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: 72px;
+}
+
+.position-btn {
+    width: 20px;
+    height: 20px;
+    background: #222;
+    border: 1px solid #444;
+    color: #999;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    border-radius: 2px;
+}
+
+.position-btn:hover {
+    background: #333;
+    color: #fff;
+}
+
+.position-btn.active {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    color: #fff;
+}
+
+.advanced-modal-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px;
+    border-top: 1px solid #333;
+    background: #111;
+    flex-shrink: 0;
+}
+
+.advanced-modal-actions .btn {
+    flex: 1;
+}
+
+/* Responsive Design for Advanced Modal */
+@media (max-width: 768px) {
+    .advanced-import-modal-content {
+        max-width: 95%;
+        max-height: 90vh;
+    }
+    
+    .preview-container {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .import-tab {
+        padding: 10px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .import-tab .tab-icon {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .control-grid {
+        gap: 12px;
+    }
+    
+    .advanced-controls {
+        padding: 16px;
+    }
+    
+    .import-tab-content {
+        padding: 16px;
+    }
+    
+    .advanced-preview-section {
+        padding: 0 16px 16px 16px;
+    }
+    
+    .advanced-modal-actions {
+        padding: 16px;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .advanced-import-modal-content {
+        max-height: 95vh;
+    }
+    
+    .preview-container {
+        width: 180px;
+        height: 180px;
+    }
+    
+    .import-tabs {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .import-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .import-tab {
+        min-width: 80px;
+        flex-shrink: 0;
+        padding: 8px;
+        font-size: 0.75rem;
+    }
+    
+    .control-grid {
+        gap: 10px;
+    }
+    
+    .checkbox-group {
+        justify-content: space-between;
+    }
+}
+/*---------- END - ADVANCED IMPORT MODAL ----------*/

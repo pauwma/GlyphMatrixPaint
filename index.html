@@ -109,6 +109,9 @@
                                 <label class="slider-label">Opacity</label>
                                 <input type="range" id="opacitySlider" min="0" max="255" value="255" class="slider" title="Double-click to reset">
                                 <input type="number" id="opacityValue" min="0" max="255" value="255" class="slider-input">
+                                <button class="eyedropper-btn" id="eyedropperBtn" title="Pick opacity from grid">
+                                    <i data-feather="droplet" class="btn-icon"></i>
+                                </button>
                                 <div class="opacity-preview" id="opacityPreview"></div>
                             </div>
                         </div>
@@ -180,7 +183,7 @@
                             </button>
                         </div>
 
-                        <div class="action-row two last">
+                        <div class="action-row two">
                             <input type="file" id="gifUpload" accept=".gif" style="display: none;">
                             <button class="btn action-btn" id="gifBtn">
                                     <i data-feather="film" class="btn-icon"></i>
@@ -189,6 +192,14 @@
                             <button class="btn action-btn" id="binaryBtn">
                                 <i data-feather="file-text" class="btn-icon"></i>
                                 Pixel Data
+                            </button>
+                        </div>
+
+                        <!-- Advanced Import Button -->
+                        <div class="action-row single last">
+                            <button class="btn primary action-btn" id="advancedImportBtn">
+                                <i data-feather="settings" class="btn-icon"></i>
+                                Advanced Import
                             </button>
                         </div>
                         
@@ -312,6 +323,155 @@
                                             <div class="progress-fill" id="gifProgressFill"></div>
                                         </div>
                                         <span class="progress-text" id="gifProgressText">Processing frames...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Import Modal -->
+                        <div class="text-modal" id="advancedImportModal" style="display: none;">
+                            <div class="modal-content advanced-import-modal-content">
+                                <div class="modal-header">
+                                    <h3>Advanced Image Import</h3>
+                                    <button class="modal-close" id="closeAdvancedImportModal">×</button>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- Import Method Tabs -->
+                                    <div class="import-tabs">
+                                        <button class="import-tab active" data-tab="upload">
+                                            <i data-feather="upload" class="tab-icon"></i>
+                                            Upload
+                                        </button>
+                                        <button class="import-tab" data-tab="paste">
+                                            <i data-feather="clipboard" class="tab-icon"></i>
+                                            Paste
+                                        </button>
+                                        <button class="import-tab" data-tab="url">
+                                            <i data-feather="link" class="tab-icon"></i>
+                                            URL
+                                        </button>
+                                    </div>
+
+                                    <!-- Preview Section -->
+                                    <div class="advanced-preview-section">
+                                        <div class="preview-container">
+                                            <canvas id="advancedPreviewCanvas" width="250" height="250"></canvas>
+                                            <div class="matrix-overlay" id="matrixOverlay">
+                                                <div class="overlay-grid" id="overlayGrid"></div>
+                                            </div>
+                                        </div>
+                                        <div class="preview-info">
+                                            <span id="advancedPreviewInfo">No image loaded</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Import Method Content -->
+                                    <div class="import-tab-content active" id="uploadTab">
+                                        <div class="upload-area" id="uploadArea">
+                                            <div class="upload-content">
+                                                <i data-feather="upload-cloud" class="upload-icon"></i>
+                                                <p>Drag & drop an image here or click to browse</p>
+                                                <input type="file" id="advancedImageUpload" accept="image/*" style="display: none;">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="import-tab-content" id="pasteTab">
+                                        <div class="paste-area">
+                                            <div class="paste-content">
+                                                <i data-feather="clipboard" class="paste-icon"></i>
+                                                <p>Click the button below to paste from clipboard</p>
+                                                <button class="btn" id="advancedPasteBtn">
+                                                    <i data-feather="clipboard" class="btn-icon"></i>
+                                                    Paste Image
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="import-tab-content" id="urlTab">
+                                        <div class="url-area">
+                                            <div class="input-group">
+                                                <label>Image URL:</label>
+                                                <input type="url" id="imageUrlInput" placeholder="https://example.com/image.jpg">
+                                            </div>
+                                            <button class="btn" id="loadUrlBtn">
+                                                <i data-feather="download" class="btn-icon"></i>
+                                                Load Image
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Image Processing Controls -->
+                                    <div class="advanced-controls" id="advancedControls" style="display: none;">
+                                        <h4>Image Processing</h4>
+                                        
+                                        <div class="control-grid">
+                                            <div class="input-group">
+                                                <label>Brightness:</label>
+                                                <input type="range" id="advancedBrightnessSlider" min="-100" max="100" value="0" class="slider" title="Double-click to reset">
+                                                <input type="number" id="advancedBrightnessValue" min="-100" max="100" value="0" class="slider-input">
+                                            </div>
+                                            
+                                            <div class="input-group">
+                                                <label>Contrast:</label>
+                                                <input type="range" id="advancedContrastSlider" min="0" max="200" value="100" class="slider" title="Double-click to reset">
+                                                <input type="number" id="advancedContrastValue" min="0" max="200" value="100" class="slider-input">
+                                            </div>
+                                            
+                                            <div class="input-group">
+                                                <label>Threshold:</label>
+                                                <input type="range" id="advancedThresholdSlider" min="0" max="255" value="128" class="slider" title="Double-click to reset">
+                                                <input type="number" id="advancedThresholdValue" min="0" max="255" value="128" class="slider-input">
+                                            </div>
+                                            
+                                            <div class="input-group checkbox-group">
+                                                <label>Invert Colors:</label>
+                                                <input type="checkbox" id="advancedInvertColors" class="checkbox-input">
+                                                <span class="checkbox-label">Invert</span>
+                                            </div>
+                                        </div>
+
+                                        <h4>Scaling & Position</h4>
+                                        
+                                        <div class="control-grid">
+                                            <div class="input-group">
+                                                <label>Fit Mode:</label>
+                                                <select id="fitMode" class="mode-select">
+                                                    <option value="fill">Fill (crop to fit)</option>
+                                                    <option value="fit" selected>Fit (maintain aspect)</option>
+                                                    <option value="stretch">Stretch (ignore aspect)</option>
+                                                    <option value="center">Center (actual size)</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="input-group" id="positionControls" style="display: none;">
+                                                <label>Position:</label>
+                                                <div class="position-grid">
+                                                    <button class="position-btn" data-position="top-left">↖</button>
+                                                    <button class="position-btn" data-position="top-center">↑</button>
+                                                    <button class="position-btn" data-position="top-right">↗</button>
+                                                    <button class="position-btn" data-position="center-left">←</button>
+                                                    <button class="position-btn active" data-position="center">●</button>
+                                                    <button class="position-btn" data-position="center-right">→</button>
+                                                    <button class="position-btn" data-position="bottom-left">↙</button>
+                                                    <button class="position-btn" data-position="bottom-center">↓</button>
+                                                    <button class="position-btn" data-position="bottom-right">↘</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="advanced-modal-actions">
+                                        <button class="btn" id="resetAdvancedBtn">
+                                            <i data-feather="rotate-ccw" class="btn-icon"></i>
+                                            Reset
+                                        </button>
+                                        <button class="btn primary" id="applyAdvancedBtn" disabled>
+                                            <i data-feather="check" class="btn-icon"></i>
+                                            Apply to Grid
+                                        </button>
                                     </div>
                                 </div>
                             </div>

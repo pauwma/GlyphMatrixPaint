@@ -14,6 +14,15 @@ let imageContext = null;
 let currentGifData = null;
 let gifFrames = [];
 let brushOpacity = 255;
+let eyedropperMode = false;
+let hoverPreviewElement = null;
+
+// Advanced Import variables
+let advancedImage = null;
+let advancedCanvas = null;
+let advancedContext = null;
+let currentFitMode = 'fit';
+let currentPosition = 'center';
 
 // Animation variables
 let frames = [];
@@ -45,6 +54,7 @@ const emojiSelected = document.querySelector('.selected-emoji-display');
 const opacitySlider = document.getElementById('opacitySlider');
 const opacityValue = document.getElementById('opacityValue');
 const opacityPreview = document.getElementById('opacityPreview');
+const eyedropperBtn = document.getElementById('eyedropperBtn');
 const imageUpload = document.getElementById('imageUpload');
 const uploadBtn = document.getElementById('uploadBtn');
 const pasteBtn = document.getElementById('pasteBtn');
@@ -158,6 +168,35 @@ const deleteAllModal = document.getElementById('deleteAllModal');
 const closeDeleteAllModal = document.getElementById('closeDeleteAllModal');
 const cancelDeleteAllBtn = document.getElementById('cancelDeleteAllBtn');
 const confirmDeleteAllBtn = document.getElementById('confirmDeleteAllBtn');
+
+// Advanced Import Modal elements
+const advancedImportBtn = document.getElementById('advancedImportBtn');
+const advancedImportModal = document.getElementById('advancedImportModal');
+const closeAdvancedImportModal = document.getElementById('closeAdvancedImportModal');
+const importTabs = document.querySelectorAll('.import-tab');
+const importTabContents = document.querySelectorAll('.import-tab-content');
+const advancedPreviewCanvas = document.getElementById('advancedPreviewCanvas');
+const matrixOverlay = document.getElementById('matrixOverlay');
+const overlayGrid = document.getElementById('overlayGrid');
+const advancedPreviewInfo = document.getElementById('advancedPreviewInfo');
+const advancedImageUpload = document.getElementById('advancedImageUpload');
+const uploadArea = document.getElementById('uploadArea');
+const advancedPasteBtn = document.getElementById('advancedPasteBtn');
+const imageUrlInput = document.getElementById('imageUrlInput');
+const loadUrlBtn = document.getElementById('loadUrlBtn');
+const advancedControls = document.getElementById('advancedControls');
+const advancedBrightnessSlider = document.getElementById('advancedBrightnessSlider');
+const advancedBrightnessValue = document.getElementById('advancedBrightnessValue');
+const advancedContrastSlider = document.getElementById('advancedContrastSlider');
+const advancedContrastValue = document.getElementById('advancedContrastValue');
+const advancedThresholdSlider = document.getElementById('advancedThresholdSlider');
+const advancedThresholdValue = document.getElementById('advancedThresholdValue');
+const advancedInvertColors = document.getElementById('advancedInvertColors');
+const fitMode = document.getElementById('fitMode');
+const positionControls = document.getElementById('positionControls');
+const positionBtns = document.querySelectorAll('.position-btn');
+const resetAdvancedBtn = document.getElementById('resetAdvancedBtn');
+const applyAdvancedBtn = document.getElementById('applyAdvancedBtn');
 const textInput = document.getElementById('textInput');
 const fontSizeSlider = document.getElementById('fontSizeSlider');
 const fontSizeValue = document.getElementById('fontSizeValue');
@@ -974,6 +1013,11 @@ function initializeGrid() {
                 // Mouse events for drawing
                 pixel.addEventListener('mousedown', (e) => handleMouseDown(e, row, col));
                 pixel.addEventListener('mouseenter', (e) => handleMouseEnter(e, row, col));
+                pixel.addEventListener('mouseleave', () => {
+                    if (eyedropperMode) {
+                        hideHoverPreview();
+                    }
+                });
                 pixel.addEventListener('mouseup', () => handleMouseUp());
                 
                 // Touch events for mobile
@@ -1018,6 +1062,12 @@ function initializeGrid() {
 function handleMouseDown(e, row, col) {
     e.preventDefault();
     
+    // Handle eyedropper mode
+    if (eyedropperMode) {
+        handleEyedropperClick(row, col);
+        return;
+    }
+    
     // Start new drawing session
     currentDrawingSession = new Map(pixelOpacities);
     
@@ -1035,7 +1085,11 @@ function handleMouseDown(e, row, col) {
 }
 
 function handleMouseEnter(e, row, col) {
-    if (brushMode && isDrawing) {
+    if (eyedropperMode) {
+        const pixelId = `${row}-${col}`;
+        const opacity = pixelOpacities.get(pixelId) || 0;
+        showHoverPreview(e, opacity);
+    } else if (brushMode && isDrawing) {
         paintPixel(row, col, drawingState);
     }
 }
@@ -1180,6 +1234,65 @@ function toggleBrushMode() {
         brushToggle.classList.add('active');
     } else {
         brushToggle.classList.remove('active');
+    }
+}
+
+function toggleEyedropper() {
+    eyedropperMode = !eyedropperMode;
+    const gridContainer = document.querySelector('.grid-container');
+    
+    if (eyedropperMode) {
+        pauseAnimationIfPlaying();
+        eyedropperBtn.classList.add('active');
+        gridContainer.classList.add('eyedropper-active');
+        
+        // Create hover preview element if it doesn't exist
+        if (!hoverPreviewElement) {
+            hoverPreviewElement = document.createElement('div');
+            hoverPreviewElement.className = 'opacity-hover-preview';
+            document.body.appendChild(hoverPreviewElement);
+        }
+    } else {
+        eyedropperBtn.classList.remove('active');
+        gridContainer.classList.remove('eyedropper-active');
+        hideHoverPreview();
+    }
+}
+
+function handleEyedropperClick(row, col) {
+    const pixelId = `${row}-${col}`;
+    const opacity = pixelOpacities.get(pixelId) || 0;
+    
+    // Set the brush opacity to the picked value
+    brushOpacity = opacity;
+    opacitySlider.value = opacity;
+    opacityValue.value = opacity;
+    updateOpacity();
+    
+    // Exit eyedropper mode
+    eyedropperMode = false;
+    eyedropperBtn.classList.remove('active');
+    document.querySelector('.grid-container').classList.remove('eyedropper-active');
+    hideHoverPreview();
+}
+
+function showHoverPreview(e, opacity) {
+    if (!eyedropperMode || !hoverPreviewElement) return;
+    
+    hoverPreviewElement.textContent = `${opacity}`;
+    hoverPreviewElement.style.display = 'block';
+    
+    // Position the preview near the cursor
+    const x = e.pageX + 15;
+    const y = e.pageY - 30;
+    
+    hoverPreviewElement.style.left = `${x}px`;
+    hoverPreviewElement.style.top = `${y}px`;
+}
+
+function hideHoverPreview() {
+    if (hoverPreviewElement) {
+        hoverPreviewElement.style.display = 'none';
     }
 }
 
@@ -2564,6 +2677,7 @@ function initCollapsibleControls() {
 // Event listeners
 brushToggle.addEventListener('click', toggleBrushMode);
 emojiModes.addEventListener('click', toggleEmojiMode);
+eyedropperBtn.addEventListener('click', toggleEyedropper);
 uploadBtn.addEventListener('click', () => imageUpload.click());
 pasteBtn.addEventListener('click', pasteFromClipboard);
 textBtn.addEventListener('click', showTextModal);
@@ -2695,8 +2809,88 @@ document.addEventListener('keydown', (e) => {
         hideEmojiModal();
         hideGifModal();
         hideDeleteAllModal();
+        hideAdvancedImportModal();
         closeExportModalHandler();
+        
+        // Cancel eyedropper mode
+        if (eyedropperMode) {
+            eyedropperMode = false;
+            eyedropperBtn.classList.remove('active');
+            document.querySelector('.grid-container').classList.remove('eyedropper-active');
+            hideHoverPreview();
+        }
     }
+});
+
+// Advanced Import Modal Event Listeners
+advancedImportBtn.addEventListener('click', showAdvancedImportModal);
+closeAdvancedImportModal.addEventListener('click', hideAdvancedImportModal);
+
+// Tab switching
+importTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        const tabName = tab.getAttribute('data-tab');
+        switchAdvancedImportTab(tabName);
+    });
+});
+
+// Upload handling
+uploadArea.addEventListener('click', () => advancedImageUpload.click());
+advancedImageUpload.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) handleAdvancedImageUpload(file);
+});
+
+// Drag and drop
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleAdvancedImageUpload(file);
+});
+
+// Paste handling
+advancedPasteBtn.addEventListener('click', handleAdvancedPaste);
+
+// URL loading
+loadUrlBtn.addEventListener('click', handleAdvancedUrlLoad);
+imageUrlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleAdvancedUrlLoad();
+});
+
+// Processing controls with slider pairs
+setupSliderPair(advancedBrightnessSlider, advancedBrightnessValue, processAdvancedImage, 0);
+setupSliderPair(advancedContrastSlider, advancedContrastValue, processAdvancedImage, 100);
+setupSliderPair(advancedThresholdSlider, advancedThresholdValue, processAdvancedImage, 128);
+
+// Other controls
+advancedInvertColors.addEventListener('change', processAdvancedImage);
+fitMode.addEventListener('change', updateFitModeControls);
+
+// Position controls
+positionBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const position = btn.getAttribute('data-position');
+        updatePositionControls(position);
+    });
+});
+
+// Action buttons
+resetAdvancedBtn.addEventListener('click', resetAdvancedImportModal);
+applyAdvancedBtn.addEventListener('click', applyAdvancedToGrid);
+
+// Close modal when clicking outside
+advancedImportModal.addEventListener('click', (e) => {
+    if (e.target === advancedImportModal) hideAdvancedImportModal();
 });
 
 // Export Modal Functions
@@ -3458,6 +3652,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize export modal functionality
     initializeExportModal();
     
+    // Initialize advanced import functionality
+    initializeAdvancedImport();
+    
     updateOpacity(); // Initialize opacity preview
     updateHistoryButtons(); // Initialize history buttons
 });
@@ -3570,5 +3767,430 @@ function updateQualityVisibility() {
         qualityGroup.style.display = 'block';
     } else {
         qualityGroup.style.display = 'none';
+    }
+}
+
+// ==================== ADVANCED IMPORT MODAL FUNCTIONS ====================
+
+function initializeAdvancedImport() {
+    // Initialize canvas for preview
+    advancedCanvas = document.createElement('canvas');
+    advancedCanvas.width = 250;
+    advancedCanvas.height = 250;
+    advancedContext = advancedCanvas.getContext('2d');
+    
+    // Create matrix overlay visualization
+    createMatrixOverlay();
+}
+
+function createMatrixOverlay() {
+    overlayGrid.innerHTML = '';
+    
+    for (let row = 0; row < gridSize; row++) {
+        const overlayRow = document.createElement('div');
+        overlayRow.className = 'overlay-row';
+        
+        const rowWidth = shapePattern[row] || 0;
+        const startCol = Math.floor((gridSize - rowWidth) / 2);
+        const endCol = startCol + rowWidth - 1;
+        
+        for (let col = startCol; col <= endCol; col++) {
+            const overlayPixel = document.createElement('div');
+            overlayPixel.className = 'overlay-pixel';
+            overlayRow.appendChild(overlayPixel);
+        }
+        
+        overlayGrid.appendChild(overlayRow);
+    }
+}
+
+function showAdvancedImportModal() {
+    advancedImportModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Reset modal state
+    resetAdvancedImportModal();
+    
+    // Initialize feather icons for the modal
+    setTimeout(() => {
+        feather.replace();
+    }, 100);
+}
+
+function hideAdvancedImportModal() {
+    advancedImportModal.style.display = 'none';
+    document.body.style.overflow = '';
+    
+    // Clean up resources
+    if (advancedImage) {
+        advancedImage = null;
+    }
+}
+
+function resetAdvancedImportModal() {
+    // Reset all controls to default values
+    advancedBrightnessSlider.value = 0;
+    advancedBrightnessValue.value = 0;
+    advancedContrastSlider.value = 100;
+    advancedContrastValue.value = 100;
+    advancedThresholdSlider.value = 128;
+    advancedThresholdValue.value = 128;
+    advancedInvertColors.checked = false;
+    fitMode.value = 'fit';
+    currentFitMode = 'fit';
+    currentPosition = 'center';
+    
+    // Reset position buttons
+    positionBtns.forEach(btn => btn.classList.remove('active'));
+    document.querySelector('[data-position="center"]').classList.add('active');
+    
+    // Hide position controls
+    positionControls.style.display = 'none';
+    
+    // Reset tab to upload
+    switchAdvancedImportTab('upload');
+    
+    // Hide controls until image is loaded
+    advancedControls.style.display = 'none';
+    applyAdvancedBtn.disabled = true;
+    
+    // Clear preview
+    clearAdvancedPreview();
+    
+    // Clear URL input
+    imageUrlInput.value = '';
+}
+
+function switchAdvancedImportTab(tabName) {
+    // Remove active class from all tabs and contents
+    importTabs.forEach(tab => tab.classList.remove('active'));
+    importTabContents.forEach(content => content.classList.remove('active'));
+    
+    // Add active class to selected tab and content
+    const selectedTab = document.querySelector(`[data-tab="${tabName}"]`);
+    const selectedContent = document.getElementById(`${tabName}Tab`);
+    
+    if (selectedTab && selectedContent) {
+        selectedTab.classList.add('active');
+        selectedContent.classList.add('active');
+    }
+}
+
+function clearAdvancedPreview() {
+    const ctx = advancedPreviewCanvas.getContext('2d');
+    ctx.clearRect(0, 0, advancedPreviewCanvas.width, advancedPreviewCanvas.height);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, advancedPreviewCanvas.width, advancedPreviewCanvas.height);
+    
+    advancedPreviewInfo.textContent = 'No image loaded';
+}
+
+function loadAdvancedImage(imageElement) {
+    advancedImage = imageElement;
+    advancedControls.style.display = 'block';
+    applyAdvancedBtn.disabled = false;
+    
+    // Update preview info
+    advancedPreviewInfo.textContent = `${imageElement.naturalWidth} × ${imageElement.naturalHeight} pixels`;
+    
+    // Process and preview image
+    processAdvancedImage();
+}
+
+function processAdvancedImage() {
+    if (!advancedImage) return;
+    
+    const brightness = parseInt(advancedBrightnessSlider.value);
+    const contrast = parseInt(advancedContrastSlider.value) / 100;
+    const threshold = parseInt(advancedThresholdSlider.value);
+    const invert = advancedInvertColors.checked;
+    const fitModeValue = fitMode.value;
+    
+    // Clear advanced canvas
+    advancedContext.clearRect(0, 0, advancedCanvas.width, advancedCanvas.height);
+    
+    // Apply scaling based on fit mode
+    const { x, y, width, height } = calculateImageDimensions(
+        advancedImage.naturalWidth, 
+        advancedImage.naturalHeight, 
+        fitModeValue, 
+        currentPosition
+    );
+    
+    // Draw image to canvas
+    advancedContext.drawImage(advancedImage, x, y, width, height);
+    
+    // Apply filters
+    applyAdvancedFilters(brightness, contrast, threshold, invert);
+    
+    // Update preview canvas
+    updateAdvancedPreview();
+}
+
+function calculateImageDimensions(imgWidth, imgHeight, mode, position) {
+    const canvasSize = 250; // advancedCanvas size
+    
+    let x = 0, y = 0, width = canvasSize, height = canvasSize;
+    
+    switch (mode) {
+        case 'fill':
+            // Fill entire canvas, crop if necessary
+            const scale = Math.max(canvasSize / imgWidth, canvasSize / imgHeight);
+            width = imgWidth * scale;
+            height = imgHeight * scale;
+            x = (canvasSize - width) / 2;
+            y = (canvasSize - height) / 2;
+            break;
+            
+        case 'fit':
+            // Fit entire image, maintain aspect ratio
+            const fitScale = Math.min(canvasSize / imgWidth, canvasSize / imgHeight);
+            width = imgWidth * fitScale;
+            height = imgHeight * fitScale;
+            x = (canvasSize - width) / 2;
+            y = (canvasSize - height) / 2;
+            break;
+            
+        case 'stretch':
+            // Stretch to fill entire canvas
+            width = canvasSize;
+            height = canvasSize;
+            break;
+            
+        case 'center':
+            // Use actual size, centered (may be cropped)
+            width = Math.min(imgWidth, canvasSize);
+            height = Math.min(imgHeight, canvasSize);
+            
+            // Apply position offset
+            const offsetX = getPositionOffset(position, 'x', imgWidth, canvasSize);
+            const offsetY = getPositionOffset(position, 'y', imgHeight, canvasSize);
+            
+            x = offsetX;
+            y = offsetY;
+            break;
+    }
+    
+    return { x, y, width, height };
+}
+
+function getPositionOffset(position, axis, imageSize, canvasSize) {
+    const [vertical, horizontal] = position.split('-');
+    
+    let offset = 0;
+    if (axis === 'x') {
+        switch (horizontal || vertical) {
+            case 'left':
+                offset = 0;
+                break;
+            case 'right':
+                offset = canvasSize - imageSize;
+                break;
+            case 'center':
+            default:
+                offset = (canvasSize - imageSize) / 2;
+                break;
+        }
+    } else if (axis === 'y') {
+        switch (vertical) {
+            case 'top':
+                offset = 0;
+                break;
+            case 'bottom':
+                offset = canvasSize - imageSize;
+                break;
+            case 'center':
+            default:
+                offset = (canvasSize - imageSize) / 2;
+                break;
+        }
+    }
+    
+    return offset;
+}
+
+function applyAdvancedFilters(brightness, contrast, threshold, invert) {
+    const imageData = advancedContext.getImageData(0, 0, advancedCanvas.width, advancedCanvas.height);
+    const data = imageData.data;
+    
+    for (let i = 0; i < data.length; i += 4) {
+        // Apply contrast
+        data[i] = ((data[i] - 128) * contrast + 128);
+        data[i + 1] = ((data[i + 1] - 128) * contrast + 128);
+        data[i + 2] = ((data[i + 2] - 128) * contrast + 128);
+        
+        // Apply brightness
+        data[i] = Math.max(0, Math.min(255, data[i] + brightness));
+        data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + brightness));
+        data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + brightness));
+        
+        // Convert to grayscale
+        const gray = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+        
+        // Apply threshold
+        const thresholdedValue = gray >= threshold ? gray : 0;
+        
+        // Apply invert
+        const finalValue = invert ? (255 - thresholdedValue) : thresholdedValue;
+        
+        data[i] = finalValue;
+        data[i + 1] = finalValue;
+        data[i + 2] = finalValue;
+    }
+    
+    advancedContext.putImageData(imageData, 0, 0);
+}
+
+function updateAdvancedPreview() {
+    const ctx = advancedPreviewCanvas.getContext('2d');
+    
+    // Clear preview canvas
+    ctx.clearRect(0, 0, advancedPreviewCanvas.width, advancedPreviewCanvas.height);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, advancedPreviewCanvas.width, advancedPreviewCanvas.height);
+    
+    // Draw processed image
+    if (advancedCanvas) {
+        ctx.drawImage(advancedCanvas, 0, 0);
+    }
+}
+
+function applyAdvancedToGrid() {
+    if (!advancedImage || !advancedCanvas) return;
+    
+    // Pause animation if playing
+    pauseAnimationIfPlaying();
+    
+    // Scale down the processed image to 25x25 for the grid
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCanvas.width = 25;
+    tempCanvas.height = 25;
+    
+    // Draw scaled down version
+    tempCtx.drawImage(advancedCanvas, 0, 0, 25, 25);
+    
+    // Get image data
+    const imageData = tempCtx.getImageData(0, 0, 25, 25);
+    const data = imageData.data;
+    
+    // Clear current pixel data
+    pixelOpacities.clear();
+    
+    // Apply to pixel grid with shape pattern
+    for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+            const rowWidth = shapePattern[row] || 0;
+            const startCol = Math.floor((gridSize - rowWidth) / 2);
+            const endCol = startCol + rowWidth - 1;
+            
+            if (col >= startCol && col <= endCol) {
+                const pixelIndex = (row * 25 + col) * 4;
+                const grayValue = data[pixelIndex]; // R channel (since all RGB are same after grayscale conversion)
+                
+                if (grayValue > 0) {
+                    const pixelId = `${row}-${col}`;
+                    pixelOpacities.set(pixelId, grayValue);
+                }
+            }
+        }
+    }
+    
+    // Save to history and update display
+    saveToHistory();
+    updatePixels();
+    updateFrameDisplay();
+    saveCurrentFrame();
+    
+    // Hide modal
+    hideAdvancedImportModal();
+    
+    showFeedback('Advanced import applied!', 'success');
+}
+
+// Event handlers
+function handleAdvancedImageUpload(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        showFeedback('Please select a valid image file', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            loadAdvancedImage(img);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleAdvancedPaste() {
+    navigator.clipboard.read().then(items => {
+        for (const item of items) {
+            for (const type of item.types) {
+                if (type.startsWith('image/')) {
+                    item.getType(type).then(blob => {
+                        const img = new Image();
+                        img.onload = function() {
+                            loadAdvancedImage(img);
+                            showFeedback('Image pasted from clipboard!', 'success');
+                        };
+                        img.src = URL.createObjectURL(blob);
+                    });
+                    return;
+                }
+            }
+        }
+        showFeedback('No image found in clipboard', 'error');
+    }).catch(err => {
+        showFeedback('Failed to access clipboard', 'error');
+    });
+}
+
+function handleAdvancedUrlLoad() {
+    const url = imageUrlInput.value.trim();
+    if (!url) {
+        showFeedback('Please enter an image URL', 'error');
+        return;
+    }
+    
+    const img = new Image();
+    img.crossOrigin = 'anonymous'; // Try to handle CORS
+    img.onload = function() {
+        loadAdvancedImage(img);
+        showFeedback('Image loaded from URL!', 'success');
+    };
+    img.onerror = function() {
+        showFeedback('Failed to load image from URL (CORS or invalid URL)', 'error');
+    };
+    img.src = url;
+}
+
+function updateFitModeControls() {
+    const mode = fitMode.value;
+    currentFitMode = mode;
+    
+    if (mode === 'center' || mode === 'fit') {
+        positionControls.style.display = 'block';
+    } else {
+        positionControls.style.display = 'none';
+    }
+    
+    if (advancedImage) {
+        processAdvancedImage();
+    }
+}
+
+function updatePositionControls(position) {
+    currentPosition = position;
+    
+    // Update button states
+    positionBtns.forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-position="${position}"]`).classList.add('active');
+    
+    if (advancedImage) {
+        processAdvancedImage();
     }
 }
