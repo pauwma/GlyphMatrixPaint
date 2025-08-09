@@ -308,6 +308,25 @@ function clearSavedData() {
     localStorage.removeItem(STORAGE_KEY);
 }
 
+function isSessionEmpty(sessionData) {
+    // Check if session is essentially empty (single frame with no pixels)
+    if (!sessionData) return true;
+    
+    // Check if only one frame exists
+    if (sessionData.frames.length !== 1) return false;
+    
+    // Check if current pixelOpacities is empty
+    const hasCurrentPixels = sessionData.pixelOpacities && sessionData.pixelOpacities.size > 0;
+    
+    // Check if the single frame has any pixels
+    const frameHasPixels = sessionData.frames[0] && 
+                           sessionData.frames[0].pixels && 
+                           sessionData.frames[0].pixels.size > 0;
+    
+    // Session is empty if no pixels in current state and no pixels in frame
+    return !hasCurrentPixels && !frameHasPixels;
+}
+
 // Debounced auto-save function
 function autoSave() {
     if (saveTimeout) {
@@ -3936,13 +3955,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check for saved session data
     const savedSession = loadFromLocalStorage();
     
-    if (savedSession) {
-        // Show restore modal if saved data exists
+    if (savedSession && !isSessionEmpty(savedSession)) {
+        // Show restore modal only if saved data exists and is not empty
         showRestoreModal(savedSession);
     } else {
-        // Normal initialization if no saved data
+        // Normal initialization if no saved data or session is empty
         initializeGrid();
         initializeAnimation();
+        
+        // Clear empty session data if it exists
+        if (savedSession && isSessionEmpty(savedSession)) {
+            clearSavedData();
+        }
     }
     
     createImageCanvas();
