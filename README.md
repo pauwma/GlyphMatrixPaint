@@ -12,8 +12,6 @@
 
 - 💾 **Auto-Save & Restore** - Never lose your work with automatic session saving and restore prompts
 - 🎨 **Eyedropper Tool** - Sample pixel opacity values from your existing artwork
-<br/>
-<br/>
 
 <div align="center">
 
