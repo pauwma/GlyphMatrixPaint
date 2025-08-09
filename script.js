@@ -135,6 +135,9 @@ const framesContainer = document.getElementById('framesContainer');
 const durationSlider = document.getElementById('durationSlider');
 const durationValue = document.getElementById('durationValue');
 
+// Debounce timer for duration input
+let durationInputTimer = null;
+
 // History controls
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
@@ -1002,21 +1005,53 @@ function updateCurrentFrameDuration() {
     updateDurationDisplay();
 }
 
-function updateDurationFromInput() {
-    let inputValue = parseInt(durationValue.value);
-    
-    // Clamp the value between min and max
-    inputValue = Math.max(50, Math.min(1000, inputValue));
-    
-    frameDuration = inputValue;
-    if (currentFrameIndex >= 0 && currentFrameIndex < frames.length) {
-        frames[currentFrameIndex].duration = frameDuration;
-        updateFramesDisplay();
+function updateDurationFromInput(immediate = false) {
+    // Clear any existing timer
+    if (durationInputTimer) {
+        clearTimeout(durationInputTimer);
+        durationInputTimer = null;
     }
     
-    // Update both slider and input field to reflect the clamped value
-    durationSlider.value = frameDuration;
-    durationValue.value = frameDuration;
+    // Function to validate and apply the duration
+    const applyDuration = () => {
+        let inputValue = parseInt(durationValue.value);
+        
+        // Only proceed if we have a valid number
+        if (isNaN(inputValue)) {
+            inputValue = frameDuration; // Revert to current value if invalid
+        } else {
+            // Clamp the value between min and max
+            inputValue = Math.max(50, Math.min(1000, inputValue));
+        }
+        
+        frameDuration = inputValue;
+        if (currentFrameIndex >= 0 && currentFrameIndex < frames.length) {
+            frames[currentFrameIndex].duration = frameDuration;
+            updateFramesDisplay();
+        }
+        
+        // Update both slider and input field to reflect the clamped value
+        durationSlider.value = frameDuration;
+        durationValue.value = frameDuration;
+    };
+    
+    if (immediate) {
+        // Apply immediately (for change event or blur)
+        applyDuration();
+    } else {
+        // Delay validation by 1 second (for input event)
+        durationInputTimer = setTimeout(applyDuration, 1000);
+    }
+}
+
+function handleDurationInput() {
+    // Called on input event - use delayed validation
+    updateDurationFromInput(false);
+}
+
+function handleDurationChange() {
+    // Called on change event - use immediate validation
+    updateDurationFromInput(true);
 }
 
 function togglePlayback() {
@@ -3000,8 +3035,9 @@ durationSlider.addEventListener('click', (e) => {
 });
 
 // Manual input field event listeners
-durationValue.addEventListener('input', updateDurationFromInput);
-durationValue.addEventListener('change', updateDurationFromInput);
+durationValue.addEventListener('input', handleDurationInput);
+durationValue.addEventListener('change', handleDurationChange);
+durationValue.addEventListener('blur', handleDurationChange);
 
 // GIF modal slider synchronization
 if (gifBrightnessSlider && gifBrightnessValue) {
