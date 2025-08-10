@@ -10,6 +10,13 @@
 
 ### Latest Updates
 
+- 🎯 **Advanced Selection Mode** - Select and manipulate specific areas of your artwork
+- 🛠️ **Selection Operations** - Move, copy/paste, fill/clear selected regions
+- ⌨️ **Keyboard Shortcuts** - Speed up your workflow with intuitive hotkeys
+- 🗂️ **New Navigation Header** - New navigation tabs for improved UI organization
+
+[![Selection Feature](/img/media/select_feature.gif)](https://pauwma.github.io/GlyphMatrixPaint/)
+
 - 💾 **Auto-Save & Restore** - Never lose your work with automatic session saving and restore prompts
 - 🎨 **Eyedropper Tool** - Sample pixel opacity values from your existing artwork
 
@@ -39,6 +46,9 @@
 - **Undo/Redo System**: Full history management for worry-free editing
 
 ### 🪄 Editing Tools
+- **Advanced Selection Mode**: Select regions for precise editing
+- **Selection Operations**: Move, copy, paste, fill, and clear selected areas
+- **Keyboard Shortcuts**: Efficient workflow with hotkeys for all major operations
 - **Fill, Clear & Invert**: Quick transformations for creative effects
 - **Mirror, Flip & Rotate**: Transform your artwork with ease
 
@@ -53,23 +63,6 @@
 - **PNG Download**: High-quality image export for sharing
 - **Animation Export**: Export complete animations into GIF
 - **Pixel Data**: Share matrix design in pixel data format
-
-<br/>
-
-## 📝 TODO
-
-### Planned Features
-- [ ] **Better Text Display**: Improve text functions to be sharp and with more options
-- [ ] **Template Library**: Pre-made templates
-### Technical Improvements
-- [ ] **Performance Optimization**: Faster rendering for complex animations
-- [ ] **Keyboard Shortcuts**: Hotkeys for common actions
-- [ ] **Direct Implementation**: Easy direct export to the glyph matrix
-
-### Community Features
-- [ ] **Gallery**: Showcase of community creations
-- [ ] **Sharing Platform**: Direct sharing to social media
-- [ ] **Animation Contests**: Community challenges and competitions
 
 <br/>
 
