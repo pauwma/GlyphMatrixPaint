@@ -19,16 +19,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Emoji:wght@300..700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <div class="header" id="header">
-            <div class="header-close" id="headerClose">
-                <i data-feather="x" class="close-icon"></i>
-            </div>
-            <div class="header-content">
-                <h1 class="main-title">Glyph Matrix Editor</h1>
-                <p>By <a href="https://privacidad.me/@pauwma">Pauwma</a></p>
+    <!-- Header outside container for full width -->
+    <div class="header" id="header">
+        <div class="header-left">
+            <!-- Logo -->
+            <div class="header-logo">
+                <a href="https://privacidad.me/@pauwma" target="_blank" class="logo-link">
+                    <img src="img/media/pauwma_logo.png" alt="Pauwma" class="logo-img">
+                    <span class="logo-text">Pauwma</span>
+                </a>
             </div>
         </div>
+        
+        <div class="header-center">
+            <h1 class="main-title">Glyph Matrix Editor</h1>
+        </div>
+        
+        <div class="header-right">
+            <!-- Navigation Tabs moved to right -->
+            <div class="header-nav">
+                <button class="nav-tab active" id="editorTab">
+                    <i data-feather="edit-2" class="tab-icon"></i>
+                    Editor
+                </button>
+                <button class="nav-tab disabled" id="galleryTab">
+                    <i data-feather="grid" class="tab-icon"></i>
+                    Gallery
+                    <span class="coming-soon">Coming Soon</span>
+                </button>
+            </div>
+            
+            <button class="shortcuts-btn" id="shortcutsBtn" title="Keyboard Shortcuts (?)">
+                <i data-feather="command" class="btn-icon"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="container">
 
         <!-- Animation Controls Section -->
         <div class="animation-section">
@@ -100,9 +127,19 @@
                         <h3>Brush</h3>
                     </div>
                     <div class="control-content">
-                        <div class="brush-mode">
-                            <div class="brush-toggle active" id="brushToggle"></div>
-                            <span class="brush-label">Drag to Paint</span>
+                        <div class="brush-controls-row">
+                            <div class="brush-mode">
+                                <button class="mode-toggle-btn active" id="brushToggleBtn">
+                                    <div class="toggle-indicator" id="brushToggle"></div>
+                                    <span class="toggle-label">Drag to Paint</span>
+                                </button>
+                            </div>
+                            <div class="selection-mode">
+                                <button class="mode-toggle-btn" id="selectionToggleBtn">
+                                    <div class="toggle-indicator" id="selectionToggle"></div>
+                                    <span class="toggle-label">Select Mode</span>
+                                </button>
+                            </div>
                         </div>
                         <div class="brush-opacity">
                             <div class="slider-group">
@@ -113,6 +150,33 @@
                                     <i data-feather="droplet" class="btn-icon"></i>
                                 </button>
                                 <div class="opacity-preview" id="opacityPreview"></div>
+                            </div>
+                        </div>
+                        <!-- Selection Actions (shown only in selection mode) -->
+                        <div class="selection-actions" id="selectionActions" style="display: none;">
+                            <div class="selection-controls-row">
+                                <button class="arrow-btn" id="moveUpBtn" title="Move Up">
+                                    <i data-feather="arrow-up" class="arrow-icon"></i>
+                                </button>
+                                <button class="arrow-btn" id="moveDownBtn" title="Move Down">
+                                    <i data-feather="arrow-down" class="arrow-icon"></i>
+                                </button>
+                                <button class="arrow-btn" id="moveLeftBtn" title="Move Left">
+                                    <i data-feather="arrow-left" class="arrow-icon"></i>
+                                </button>
+                                <button class="arrow-btn" id="moveRightBtn" title="Move Right">
+                                    <i data-feather="arrow-right" class="arrow-icon"></i>
+                                </button>
+                                <div class="selection-separator"></div>
+                                <button class="arrow-btn" id="selectAllBtn" title="Select All">
+                                    <i data-feather="check-square" class="arrow-icon"></i>
+                                </button>
+                                <button class="arrow-btn" id="copySelectionBtn" title="Copy">
+                                    <i data-feather="copy" class="arrow-icon"></i>
+                                </button>
+                                <button class="arrow-btn" id="pasteSelectionBtn" title="Paste">
+                                    <i data-feather="clipboard" class="arrow-icon"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -183,7 +247,7 @@
                             </button>
                         </div>
 
-                        <div class="action-row two">
+                        <div class="action-row two last">
                             <input type="file" id="gifUpload" accept=".gif" style="display: none;">
                             <button class="btn action-btn" id="gifBtn">
                                     <i data-feather="film" class="btn-icon"></i>
@@ -798,7 +862,63 @@
         </div>
     </div>
 
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="shortcuts-modal" id="shortcutsModal" style="display: none;">
+        <div class="modal-content shortcuts-content">
+            <div class="modal-header">
+                <h3><i data-feather="command" class="modal-icon"></i>Keyboard Shortcuts</h3>
+                <button class="modal-close" id="closeShortcutsModal">×</button>
+            </div>
+            <div class="modal-body shortcuts-body">
+                <div class="shortcut-group">
+                    <h4>Global</h4>
+                    <div class="shortcut-item">
+                        <span>Undo</span>
+                        <span class="shortcut-keys">Ctrl/⌘ + Z</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Redo</span>
+                        <span class="shortcut-keys">Ctrl/⌘ + Shift + Z</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Close/Exit</span>
+                        <span class="shortcut-keys">Esc</span>
+                    </div>
+                </div>
+                
+                <div class="shortcut-group">
+                    <h4>Selection Mode</h4>
+                    <div class="shortcut-item">
+                        <span>Select All <span class="shortcut-note">(auto-enables selection mode)</span></span>
+                        <span class="shortcut-keys">Ctrl/⌘ + A</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Deselect All</span>
+                        <span class="shortcut-keys">Ctrl/⌘ + D</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Copy Selection</span>
+                        <span class="shortcut-keys">Ctrl/⌘ + C</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Cut Selection</span>
+                        <span class="shortcut-keys">Ctrl/⌘ + X</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Paste <span class="shortcut-note">(auto-enables selection mode)</span></span>
+                        <span class="shortcut-keys">Ctrl/⌘ + V</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>Move Selection</span>
+                        <span class="shortcut-keys">Arrow Keys</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="emojiNames.js"></script>
     <script src="script.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -67,40 +67,287 @@ body {
 }
 
 /* ---------- INI - TOP ---------- */
+/* Header Redesign */
 .header {
-    text-align: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
     width: 100%;
-    max-width: 800px;
-    padding-bottom: 15px;
-    position: relative;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    overflow: visible;
 }
 
-.header-close {
+/* Add padding to body to account for fixed header */
+body {
+    padding-top: 68px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-link {
+    color: #fff;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logo-img {
+    height: 28px;
+    width: 28px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.logo-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #fff 0%, #ccc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.logo-link:hover {
+    opacity: 0.8;
+}
+
+.header-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-tab {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #999;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.nav-tab .tab-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.nav-tab.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.nav-tab:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.nav-tab.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.coming-soon {
     position: absolute;
-    top: 0;
-    right: 0;
+    top: -8px;
+    right: -10px;
+    background: #ff4444;
+    color: #fff;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 1;
+}
+
+.header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    pointer-events: none;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.shortcuts-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-    -webkit-tap-highlight-color: transparent;
-    width: 32px;
-    height: 32px;
+    transition: all 0.2s;
 }
 
-.header-close:hover {
-    background-color: rgba(255, 255, 255, 0.05);
+.shortcuts-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
-.close-icon {
+.shortcuts-btn .btn-icon {
     width: 18px;
     height: 18px;
-    color: #999;
+}
+
+/* Modal icon styling */
+.modal-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+}
+
+/* Responsive header styles */
+@media (max-width: 768px) {
+    .header {
+        padding: 20px 15px 14px 15px;
+    }
+    
+    body {
+        padding-top: 68px;
+    }
+    
+    .header-center {
+        display: none;
+    }
+    
+    .logo-text {
+        font-size: 1rem;
+    }
+    
+    .logo-img {
+        height: 24px;
+        width: 24px;
+    }
+    
+    .nav-tab {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+        position: relative;
+    }
+    
+    .nav-tab .tab-icon {
+        width: 14px;
+        height: 14px;
+    }
+    
+    /* Adjust Coming Soon badge on mobile */
+    .coming-soon {
+        top: -6px;
+        right: -8px;
+    }
+    
+    /* Hide shortcuts button on mobile */
+    .shortcuts-btn {
+        display: none;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .header {
+        padding: 35px 12px 12px 12px;
+        overflow: visible;
+        align-items: center;
+    }
+    
+    body {
+        padding-top: 82px;
+    }
+    
+    .header-left {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .header-logo {
+        display: flex;
+        align-items: center;
+    }
+    
+    .logo-link {
+        display: flex;
+        align-items: center;
+    }
+    
+    .header-right {
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+    }
+    
+    .header-nav {
+        overflow: visible;
+        display: flex;
+        align-items: center;
+    }
+    
+    .nav-tab {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+        overflow: visible;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Ensure Coming Soon badge doesn't get cut off */
+    .coming-soon {
+        font-size: 8px;
+        padding: 2px 4px;
+    }
+    
+    .logo-img {
+        height: 22px;
+        width: 22px;
+    }
+    
+    .logo-text {
+        font-size: 0.95rem;
+        line-height: 1;
+    }
 }
 
 .header h1 {
@@ -118,7 +365,7 @@ body {
     font-weight: 100;
     letter-spacing: 0.1rem;
     word-spacing: 0.4rem;
-    margin-top: 0.5rem;
+    margin-top: 0.7rem;
 }
 
 .header p {
@@ -399,6 +646,175 @@ a:hover   { opacity: .8; }
 }
 /*---------- END - BUTTONS ----------*/
 
+/* ---------- INI - SELECTION MODE ---------- */
+.pixel.selected {
+    position: relative;
+    box-shadow: 0 0 0 2px #ff4444, inset 0 0 0 1px #ff4444;
+    z-index: 10;
+}
+
+.selection-mode .pixel {
+    cursor: pointer !important;
+}
+
+.selection-mode .pixel:hover:not(.inactive) {
+    box-shadow: 0 0 0 1px #ff444480;
+}
+
+/* Selection mode UI elements */
+.mode-toggle-btn {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #333;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 400;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mode-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #555;
+}
+
+.mode-toggle-btn.active {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+}
+
+.mode-toggle-btn.active .toggle-indicator {
+    background: #000;
+}
+
+.toggle-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #555;
+    transition: all 0.2s ease;
+}
+
+.toggle-label {
+    flex: 1;
+    text-align: center;
+}
+
+/* Selection mode active state - red accent */
+#selectionToggleBtn.active {
+    background: #ff4444;
+    border-color: #ff4444;
+    color: #fff;
+}
+
+#selectionToggleBtn.active .toggle-indicator {
+    background: #fff;
+}
+
+.selection-mode #brushToggleBtn.active {
+    background: #ff4444;
+    border-color: #ff4444;
+    color: #fff;
+}
+
+.selection-mode #brushToggleBtn.active .toggle-indicator {
+    background: #fff;
+}
+
+/* Selection mode controls */
+.brush-controls-row {
+    display: flex;
+    gap: 10px;
+}
+
+.brush-mode,
+.selection-mode {
+    flex: 1;
+}
+
+.selection-actions {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #333;
+}
+
+.selection-controls-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.selection-separator {
+    width: 1px;
+    height: 25px;
+    background: #333;
+    margin: 0 8px;
+}
+
+.arrow-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid #333;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.arrow-btn:hover {
+    background: #ff4444;
+    border-color: #ff4444;
+}
+
+.arrow-btn:active {
+    transform: scale(0.95);
+}
+
+.arrow-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.5;
+}
+
+/* Selection mode opacity slider */
+.selection-mode .slider {
+    accent-color: #ff4444;
+}
+
+.selection-mode .slider::-webkit-slider-thumb {
+    background: #ff4444;
+}
+
+.selection-mode .slider::-moz-range-thumb {
+    background: #ff4444;
+}
+
+.selection-mode .slider-label {
+    color: #ff4444;
+}
+
+.selection-mode .slider-input {
+    width: 50px !important;
+    max-width: 50px !important;
+}
+
+
+/* ---------- END - SELECTION MODE ---------- */
+
 .output-section {
     background: #111;
     border: 1px solid #333;
@@ -541,19 +957,23 @@ a:hover   { opacity: .8; }
         margin-bottom: 15px;
     }
 
+    div.selection-mode {
+        margin-top: 5px;
+        margin-bottom: 15px;
+    }
+
     .brush-opacity {
         padding-top: 15px;
     }
     
     .eyedropper-btn {
-        width: 18px;
-        height: 18px;
-        margin-left: 4px;
+        width: 22px;
+        height: 22px;
     }
     
     .eyedropper-btn .btn-icon {
-        width: 10px;
-        height: 10px;
+        width: 12px;
+        height: 12px;
     }
 }
 /*---------- END - BRUSH MODE ----------*/
@@ -3207,6 +3627,114 @@ input[type="color"]:focus {
     
     .restore-modal .btn {
         max-width: 100%;
+    }
+}
+
+/* Keyboard Shortcuts Modal */
+.shortcuts-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.shortcuts-content {
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 12px;
+}
+
+.shortcuts-content .modal-header h3 {
+    display: flex;
+    align-items: center;
+}
+
+.shortcuts-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+}
+
+.shortcut-group {
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.shortcut-group h4 {
+    margin: 0 0 15px 0;
+    color: #999;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.shortcut-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.shortcut-item:last-child {
+    border-bottom: none;
+}
+
+.shortcut-item span:first-child {
+    flex: 1;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.shortcut-note {
+    color: #666;
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+.shortcut-keys {
+    background: #222;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #fff;
+    white-space: nowrap;
+    border: 1px solid #333;
+}
+
+@media (max-width: 600px) {
+    .shortcuts-content {
+        max-width: 95%;
+        max-height: 90vh;
+    }
+    
+    .shortcuts-body {
+        padding: 15px;
+    }
+    
+    .shortcut-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .shortcut-keys {
+        align-self: flex-end;
     }
 }
 /*---------- END - RESTORE SESSION MODAL ----------*/

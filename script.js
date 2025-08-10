@@ -17,6 +17,15 @@ let brushOpacity = 255;
 let eyedropperMode = false;
 let hoverPreviewElement = null;
 
+// Selection mode variables
+let selectionMode = false;
+let selectedPixels = new Set();
+let cachedSelectedPixels = new Set(); // Cache to preserve selection when toggling modes
+let selectionClipboard = new Map();
+let isSelecting = false;
+let dragSelectionAction = null; // Determined when drag starts based on first pixel
+let selectionStartPixel = null;
+
 // Advanced Import variables
 let advancedImage = null;
 let advancedCanvas = null;
@@ -48,6 +57,17 @@ let currentCategory = 'smileys';
 
 // DOM elements
 const brushToggle = document.getElementById('brushToggle');
+const brushToggleBtn = document.getElementById('brushToggleBtn');
+const selectionToggle = document.getElementById('selectionToggle');
+const selectionToggleBtn = document.getElementById('selectionToggleBtn');
+const selectionActions = document.getElementById('selectionActions');
+const selectAllBtn = document.getElementById('selectAllBtn');
+const copySelectionBtn = document.getElementById('copySelectionBtn');
+const pasteSelectionBtn = document.getElementById('pasteSelectionBtn');
+const moveUpBtn = document.getElementById('moveUpBtn');
+const moveLeftBtn = document.getElementById('moveLeftBtn');
+const moveDownBtn = document.getElementById('moveDownBtn');
+const moveRightBtn = document.getElementById('moveRightBtn');
 const emojiToggle = document.getElementById('emojiToggle');
 const emojiModes = document.getElementById('emojiMode');
 const emojiSelected = document.querySelector('.selected-emoji-display');
@@ -1378,6 +1398,30 @@ function handleMouseDown(e, row, col) {
         return;
     }
     
+    // Handle selection mode
+    if (selectionMode) {
+        isSelecting = true;
+        selectionStartPixel = `${row}-${col}`;
+        
+        if (brushMode) {
+            // Drag selection mode - determine action based on first pixel
+            const pixelId = `${row}-${col}`;
+            if (selectedPixels.has(pixelId)) {
+                // If pixel is selected, we'll unselect on drag
+                dragSelectionAction = 'unselect';
+                unselectPixel(row, col);
+            } else {
+                // If pixel is not selected, we'll select on drag
+                dragSelectionAction = 'select';
+                selectPixel(row, col);
+            }
+        } else {
+            // Toggle individual pixel selection
+            togglePixelSelection(row, col);
+        }
+        return;
+    }
+    
     // Start new drawing session
     currentDrawingSession = new Map(pixelOpacities);
     
@@ -1399,6 +1443,13 @@ function handleMouseEnter(e, row, col) {
         const pixelId = `${row}-${col}`;
         const opacity = pixelOpacities.get(pixelId) || 0;
         showHoverPreview(e, opacity);
+    } else if (selectionMode && isSelecting && brushMode) {
+        // Drag selection - use the action determined at drag start
+        if (dragSelectionAction === 'select') {
+            selectPixel(row, col);
+        } else if (dragSelectionAction === 'unselect') {
+            unselectPixel(row, col);
+        }
     } else if (brushMode && isDrawing) {
         paintPixel(row, col, drawingState);
     }
@@ -1407,6 +1458,11 @@ function handleMouseEnter(e, row, col) {
 function handleMouseUp() {
     if (isDrawing || currentDrawingSession) {
         finishDrawingSession();
+    }
+    if (isSelecting) {
+        isSelecting = false;
+        selectionStartPixel = null;
+        dragSelectionAction = null; // Reset drag selection action
     }
     isDrawing = false;
     drawingState = null;
@@ -1421,7 +1477,7 @@ function handleTouchMove(e) {
     // Always prevent default to avoid scrolling
     e.preventDefault();
     
-    if (!isDrawing) return;
+    if (!isDrawing && !isSelecting) return;
     
     const touch = e.touches[0];
     const element = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -1429,7 +1485,17 @@ function handleTouchMove(e) {
     if (element && element.classList.contains('pixel') && !element.classList.contains('inactive')) {
         const row = parseInt(element.dataset.row);
         const col = parseInt(element.dataset.col);
-        paintPixel(row, col, drawingState);
+        
+        if (selectionMode && isSelecting && brushMode) {
+            // Handle drag selection in touch mode - use the action determined at drag start
+            if (dragSelectionAction === 'select') {
+                selectPixel(row, col);
+            } else if (dragSelectionAction === 'unselect') {
+                unselectPixel(row, col);
+            }
+        } else if (isDrawing) {
+            paintPixel(row, col, drawingState);
+        }
     }
 }
 
@@ -1543,9 +1609,341 @@ function toggleBrushMode() {
     
     if (brushMode) {
         brushToggle.classList.add('active');
+        brushToggleBtn.classList.add('active');
     } else {
         brushToggle.classList.remove('active');
+        brushToggleBtn.classList.remove('active');
     }
+}
+
+// Selection mode functions
+function toggleSelectionMode() {
+    pauseAnimationIfPlaying();
+    selectionMode = !selectionMode;
+    
+    if (selectionMode) {
+        // Enter selection mode
+        selectionToggle.classList.add('active');
+        selectionToggleBtn.classList.add('active');
+        selectionActions.style.display = 'block';
+        
+        // Initialize feather icons in selection controls
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+        
+        // Add selection mode class to relevant elements
+        document.querySelector('.grid-container').classList.add('selection-mode');
+        opacitySlider.classList.add('selection-mode');
+        opacityValue.classList.add('selection-mode');
+        document.querySelector('.brush-opacity').classList.add('selection-mode');
+        
+        // Exit eyedropper mode if active
+        if (eyedropperMode) {
+            toggleEyedropper();
+        }
+        
+        // Restore cached selection if exists
+        if (cachedSelectedPixels.size > 0) {
+            cachedSelectedPixels.forEach(pixelId => {
+                const [row, col] = pixelId.split('-').map(Number);
+                selectPixel(row, col);
+            });
+            // No need to call updateSelectAllButton here since selectPixel already does it
+        }
+    } else {
+        // Exit selection mode
+        selectionToggle.classList.remove('active');
+        selectionToggleBtn.classList.remove('active');
+        selectionActions.style.display = 'none';
+        
+        // Remove selection mode classes
+        document.querySelector('.grid-container').classList.remove('selection-mode');
+        opacitySlider.classList.remove('selection-mode');
+        opacityValue.classList.remove('selection-mode');
+        document.querySelector('.brush-opacity').classList.remove('selection-mode');
+        
+        // Cache current selection before clearing
+        cachedSelectedPixels = new Set(selectedPixels);
+        
+        // Clear selection
+        clearSelection();
+    }
+}
+
+
+// Selection core functions
+function selectPixel(row, col) {
+    const pixelId = `${row}-${col}`;
+    const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+    
+    if (pixel && !pixel.classList.contains('inactive')) {
+        selectedPixels.add(pixelId);
+        pixel.classList.add('selected');
+        // Update select all button state
+        updateSelectAllButton(selectedPixels.size > 0);
+    }
+}
+
+function unselectPixel(row, col) {
+    const pixelId = `${row}-${col}`;
+    const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+    
+    if (pixel) {
+        selectedPixels.delete(pixelId);
+        pixel.classList.remove('selected');
+        // Update select all button state
+        updateSelectAllButton(selectedPixels.size > 0);
+    }
+}
+
+
+function togglePixelSelection(row, col) {
+    const pixelId = `${row}-${col}`;
+    if (selectedPixels.has(pixelId)) {
+        unselectPixel(row, col);
+    } else {
+        selectPixel(row, col);
+    }
+}
+
+function clearSelection() {
+    selectedPixels.forEach(pixelId => {
+        const [row, col] = pixelId.split('-').map(Number);
+        const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        if (pixel) {
+            pixel.classList.remove('selected');
+        }
+    });
+    selectedPixels.clear();
+    updateSelectAllButton(false);
+}
+
+function selectAll() {
+    // Simple toggle: if anything is selected, deselect all. Otherwise, select all active pixels
+    if (selectedPixels.size > 0) {
+        // Deselect all
+        clearSelection();
+        updateSelectAllButton(false);
+    } else {
+        // Select all pixels with opacity > 0
+        for (let row = 0; row < gridSize; row++) {
+            const rowWidth = shapePattern[row] || 0;
+            const startCol = Math.floor((gridSize - rowWidth) / 2);
+            const endCol = startCol + rowWidth - 1;
+            
+            for (let col = startCol; col <= endCol; col++) {
+                const pixelId = `${row}-${col}`;
+                const opacity = pixelOpacities.get(pixelId);
+                if (opacity && opacity > 0) {
+                    const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    if (pixel && !pixel.classList.contains('inactive')) {
+                        selectedPixels.add(pixelId);
+                        pixel.classList.add('selected');
+                    }
+                }
+            }
+        }
+        // Update button to show deselect icon if we selected any pixels
+        updateSelectAllButton(selectedPixels.size > 0);
+    }
+}
+
+function updateSelectAllButton(allSelected) {
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    if (!selectAllBtn) return;
+    
+    // Clear the button content and recreate the icon
+    selectAllBtn.innerHTML = '';
+    
+    // Create new icon element
+    const icon = document.createElement('i');
+    icon.className = 'arrow-icon';
+    
+    if (allSelected) {
+        // Change to deselect icon
+        icon.setAttribute('data-feather', 'square');
+        selectAllBtn.title = 'Deselect All';
+    } else {
+        // Change to select icon
+        icon.setAttribute('data-feather', 'check-square');
+        selectAllBtn.title = 'Select All';
+    }
+    
+    // Add the icon to the button
+    selectAllBtn.appendChild(icon);
+    
+    // Re-render feather icons
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+}
+
+
+// Selection operations
+function applyOpacityToSelection(opacity) {
+    if (selectedPixels.size === 0) return;
+    
+    selectedPixels.forEach(pixelId => {
+        pixelOpacities.set(pixelId, opacity);
+        const [row, col] = pixelId.split('-').map(Number);
+        const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        updatePixelVisual(pixel, pixelId);
+    });
+    
+    saveToHistory();
+    updateDisplay();
+    autoSave();
+}
+
+function moveSelection(direction) {
+    if (selectedPixels.size === 0) return;
+    
+    const newOpacities = new Map(pixelOpacities);
+    const movedPixels = new Set();
+    
+    // Clear current selected pixels
+    selectedPixels.forEach(pixelId => {
+        newOpacities.set(pixelId, 0);
+    });
+    
+    // Move each selected pixel
+    selectedPixels.forEach(pixelId => {
+        const [row, col] = pixelId.split('-').map(Number);
+        let newRow = row;
+        let newCol = col;
+        
+        switch(direction) {
+            case 'up':
+                newRow = row - 1;
+                if (newRow < 0) newRow = gridSize - 1; // Wrap around
+                break;
+            case 'down':
+                newRow = row + 1;
+                if (newRow >= gridSize) newRow = 0; // Wrap around
+                break;
+            case 'left':
+                newCol = col - 1;
+                break;
+            case 'right':
+                newCol = col + 1;
+                break;
+        }
+        
+        // Check if new position is valid within the shape
+        const rowWidth = shapePattern[newRow] || 0;
+        const startCol = Math.floor((gridSize - rowWidth) / 2);
+        const endCol = startCol + rowWidth - 1;
+        
+        if (newCol >= startCol && newCol <= endCol) {
+            const newPixelId = `${newRow}-${newCol}`;
+            const opacity = pixelOpacities.get(pixelId) || 0;
+            newOpacities.set(newPixelId, opacity);
+            movedPixels.add(newPixelId);
+        }
+    });
+    
+    // Update pixelOpacities
+    pixelOpacities = newOpacities;
+    
+    // Clear old selection visuals
+    clearSelection();
+    
+    // Update selection to moved pixels
+    selectedPixels = movedPixels;
+    movedPixels.forEach(pixelId => {
+        const [row, col] = pixelId.split('-').map(Number);
+        const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        if (pixel) {
+            pixel.classList.add('selected');
+        }
+    });
+    
+    // Update select all button state
+    updateSelectAllButton(selectedPixels.size > 0);
+    
+    saveToHistory();
+    updateDisplay();
+    autoSave();
+}
+
+function copySelection() {
+    if (selectedPixels.size === 0) {
+        showFeedback('No pixels selected to copy', 'error');
+        return;
+    }
+    
+    selectionClipboard.clear();
+    
+    // Store absolute positions and opacities
+    selectedPixels.forEach(pixelId => {
+        const opacity = pixelOpacities.get(pixelId) || 0;
+        selectionClipboard.set(pixelId, opacity);
+    });
+    
+    showFeedback(`Copied ${selectedPixels.size} pixels`, 'success');
+}
+
+function pasteSelection() {
+    if (selectionClipboard.size === 0) {
+        showFeedback('Nothing to paste', 'error');
+        return;
+    }
+    
+    // Clear current selection
+    clearSelection();
+    
+    // Paste at original positions
+    selectionClipboard.forEach((opacity, pixelId) => {
+        const [row, col] = pixelId.split('-').map(Number);
+        
+        // Check if position is valid
+        if (row >= 0 && row < gridSize && col >= 0 && col < gridSize) {
+            const rowWidth = shapePattern[row] || 0;
+            const startCol = Math.floor((gridSize - rowWidth) / 2);
+            const endCol = startCol + rowWidth - 1;
+            
+            if (col >= startCol && col <= endCol) {
+                pixelOpacities.set(pixelId, opacity);
+                selectPixel(row, col);
+            }
+        }
+    });
+    
+    saveToHistory();
+    updateDisplay();
+    autoSave();
+    showFeedback(`Pasted ${selectedPixels.size} pixels`, 'success');
+}
+
+function fillSelection() {
+    if (selectedPixels.size === 0) return;
+    
+    selectedPixels.forEach(pixelId => {
+        pixelOpacities.set(pixelId, brushOpacity);
+        const [row, col] = pixelId.split('-').map(Number);
+        const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        updatePixelVisual(pixel, pixelId);
+    });
+    
+    saveToHistory();
+    updateDisplay();
+    autoSave();
+}
+
+function clearSelectedPixels() {
+    if (selectedPixels.size === 0) return;
+    
+    selectedPixels.forEach(pixelId => {
+        pixelOpacities.set(pixelId, 0);
+        const [row, col] = pixelId.split('-').map(Number);
+        const pixel = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+        updatePixelVisual(pixel, pixelId);
+    });
+    
+    saveToHistory();
+    updateDisplay();
+    autoSave();
 }
 
 function toggleEyedropper() {
@@ -1646,11 +2044,24 @@ function updateOpacity() {
     const normalizedOpacity = value / 255;
     const grayValue = Math.round(255 * normalizedOpacity);
     opacityPreview.style.backgroundColor = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+    
+    // If in selection mode with selected pixels, apply opacity to selection
+    if (selectionMode && selectedPixels.size > 0) {
+        applyOpacityToSelection(value);
+    }
 }
 
 // Action functions
 function fillAll() {
     pauseAnimationIfPlaying();
+    
+    // If in selection mode and pixels are selected, fill only selection
+    if (selectionMode && selectedPixels.size > 0) {
+        fillSelection();
+        return;
+    }
+    
+    // Otherwise fill all pixels
     for (let row = 0; row < gridSize; row++) {
         const rowWidth = shapePattern[row] || 0;
         const startCol = Math.floor((gridSize - rowWidth) / 2);
@@ -1669,6 +2080,14 @@ function fillAll() {
 
 function eraseAll() {
     pauseAnimationIfPlaying();
+    
+    // If in selection mode and pixels are selected, clear only selection
+    if (selectionMode && selectedPixels.size > 0) {
+        clearSelectedPixels();
+        return;
+    }
+    
+    // Otherwise clear all pixels
     pixelOpacities.clear();
     saveToHistory();
     updateDisplay();
@@ -1942,6 +2361,25 @@ function hideTextModal() {
     textModal.style.display = 'none';
     document.body.style.overflow = '';
     textInput.value = '';
+}
+
+// Shortcuts Modal Functions
+function showShortcutsModal() {
+    const modal = document.getElementById('shortcutsModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Initialize feather icons in modal
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+}
+
+function hideShortcutsModal() {
+    const modal = document.getElementById('shortcutsModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 function showEmojiModal() {
@@ -2958,15 +3396,7 @@ async function exportAsWebM() {
     }
 }
 
-// Header close functionality
-function initHeaderClose() {
-    const headerClose = document.getElementById('headerClose');
-    const header = document.querySelector('.header');
-    
-    headerClose.addEventListener('click', () => {
-        header.style.display = 'none';
-    });
-}
+// Header functionality (no longer closeable)
 
 // Horizontal scrolling for frames container
 function initFramesScrolling() {
@@ -2993,7 +3423,15 @@ function initCollapsibleControls() {
 }
 
 // Event listeners
-brushToggle.addEventListener('click', toggleBrushMode);
+brushToggleBtn.addEventListener('click', toggleBrushMode);
+selectionToggleBtn.addEventListener('click', toggleSelectionMode);
+selectAllBtn.addEventListener('click', selectAll);
+copySelectionBtn.addEventListener('click', copySelection);
+pasteSelectionBtn.addEventListener('click', pasteSelection);
+moveUpBtn.addEventListener('click', () => moveSelection('up'));
+moveLeftBtn.addEventListener('click', () => moveSelection('left'));
+moveDownBtn.addEventListener('click', () => moveSelection('down'));
+moveRightBtn.addEventListener('click', () => moveSelection('right'));
 emojiModes.addEventListener('click', toggleEmojiMode);
 eyedropperBtn.addEventListener('click', toggleEyedropper);
 uploadBtn.addEventListener('click', () => imageUpload.click());
@@ -3100,6 +3538,25 @@ closeGifModal.addEventListener('click', hideGifModal);
 closeDeleteAllModal.addEventListener('click', hideDeleteAllModal);
 cancelDeleteAllBtn.addEventListener('click', hideDeleteAllModal);
 confirmDeleteAllBtn.addEventListener('click', deleteAllFrames);
+
+// Shortcuts modal event listeners
+const shortcutsBtn = document.getElementById('shortcutsBtn');
+const closeShortcutsModal = document.getElementById('closeShortcutsModal');
+const shortcutsModal = document.getElementById('shortcutsModal');
+
+if (shortcutsBtn) {
+    shortcutsBtn.addEventListener('click', showShortcutsModal);
+}
+if (closeShortcutsModal) {
+    closeShortcutsModal.addEventListener('click', hideShortcutsModal);
+}
+if (shortcutsModal) {
+    shortcutsModal.addEventListener('click', (e) => {
+        if (e.target === shortcutsModal) {
+            hideShortcutsModal();
+        }
+    });
+}
 generateTextBtn.addEventListener('click', generateTextPixelArt);
 generateEmojiBtn.addEventListener('click', generateEmojiPixelArt);
 processGifBtn.addEventListener('click', processGifToFrames);
@@ -3121,14 +3578,25 @@ deleteAllModal.addEventListener('click', (e) => {
     if (e.target === deleteAllModal) hideDeleteAllModal();
 });
 
-// Close modals with Escape key
+// Helper function to check if we should process keyboard shortcuts
+function shouldProcessShortcut() {
+    const activeElement = document.activeElement;
+    const isInputActive = activeElement.tagName === 'INPUT' || 
+                          activeElement.tagName === 'TEXTAREA' || 
+                          activeElement.contentEditable === 'true';
+    return !isInputActive;
+}
+
+// Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
+    // Always allow Escape key to work
     if (e.key === 'Escape') {
         hideTextModal();
         hideEmojiModal();
         hideGifModal();
         hideDeleteAllModal();
         hideAdvancedImportModal();
+        hideShortcutsModal();
         closeExportModalHandler();
         
         // Cancel eyedropper mode
@@ -3138,6 +3606,116 @@ document.addEventListener('keydown', (e) => {
             document.querySelector('.grid-container').classList.remove('eyedropper-active');
             hideHoverPreview();
         }
+        
+        // Exit selection mode
+        if (selectionMode) {
+            toggleSelectionMode();
+        }
+        return;
+    }
+    
+    // Skip other shortcuts if typing in an input field
+    if (!shouldProcessShortcut()) {
+        return;
+    }
+    
+    // Support both Cmd (Mac) and Ctrl (Windows/Linux)
+    const cmdOrCtrl = e.metaKey || e.ctrlKey;
+    
+    // Normalize key to lowercase for consistent checking
+    const key = e.key.toLowerCase();
+    
+    // Undo/Redo shortcuts
+    // Cmd/Ctrl+Z: Undo
+    if (cmdOrCtrl && !e.shiftKey && key === 'z') {
+        e.preventDefault();
+        e.stopPropagation();
+        undo();
+        return false;
+    }
+    // Cmd/Ctrl+Shift+Z: Redo  
+    if (cmdOrCtrl && e.shiftKey && key === 'z') {
+        e.preventDefault();
+        e.stopPropagation();
+        redo();
+        return false;
+    }
+    
+    // Selection mode shortcuts (auto-enable selection mode if needed)
+    
+    // Cmd/Ctrl+A: Select all (auto-enable selection mode)
+    if (cmdOrCtrl && key === 'a') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!selectionMode) {
+            toggleSelectionMode();
+        }
+        selectAll();
+        return false;
+    }
+    
+    // These shortcuts only work in selection mode
+    if (selectionMode) {
+        // Cmd/Ctrl+D: Deselect all
+        if (cmdOrCtrl && key === 'd') {
+            e.preventDefault();
+            e.stopPropagation();
+            clearSelection();
+            return false;
+        }
+        // Cmd/Ctrl+C: Copy selection
+        if (cmdOrCtrl && key === 'c') {
+            e.preventDefault();
+            e.stopPropagation();
+            copySelection();
+            return false;
+        }
+        // Cmd/Ctrl+X: Cut (copy and delete) selection
+        if (cmdOrCtrl && key === 'x') {
+            e.preventDefault();
+            e.stopPropagation();
+            copySelection();
+            clearSelectedPixels();
+            return false;
+        }
+        // Arrow keys: Move selection
+        if (selectedPixels.size > 0 && !cmdOrCtrl && !e.shiftKey && !e.altKey && !e.metaKey) {
+            switch(e.key) {
+                case 'ArrowUp':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    moveSelection('up');
+                    return false;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    moveSelection('down');
+                    return false;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    moveSelection('left');
+                    return false;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    moveSelection('right');
+                    return false;
+            }
+        }
+    }
+    
+    // Cmd/Ctrl+V: Paste selection (auto-enable selection mode if clipboard has content)
+    if (cmdOrCtrl && key === 'v') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!selectionMode && selectionClipboard.size > 0) {
+            toggleSelectionMode();
+        }
+        if (selectionMode) {
+            pasteSelection();
+        }
+        return false;
     }
 });
 
@@ -3972,7 +4550,6 @@ document.addEventListener('DOMContentLoaded', () => {
     createImageCanvas();
     initCollapsibleControls();
     initFramesScrolling();
-    initHeaderClose();
     
     // Initialize emoji functionality
     populateEmojiGrid('smileys');
