@@ -17,6 +17,8 @@
 
 [![Selection Feature](/img/media/select_feature.gif)](https://pauwma.github.io/GlyphMatrixPaint/)
 
+### Other Recent Updates
+
 - 💾 **Auto-Save & Restore** - Never lose your work with automatic session saving and restore prompts
 - 🎨 **Eyedropper Tool** - Sample pixel opacity values from your existing artwork
 
@@ -30,7 +32,6 @@
 
 [![Eyedropper Tool](/img/media/eyedropper.gif)](https://pauwma.github.io/GlyphMatrixPaint/)
 
-### Other Recent Updates
 - 🎞️ **Animation** - Build a timeline to animate your designs 
 - 🎬 **GIF Import Support** - Transform animated GIFs directly into matrix animations
 - 📤 **GIF Export** - Export your animations as GIF files for easy sharing
