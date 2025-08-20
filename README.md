@@ -2,8 +2,8 @@
 
 > A web-based pixel art editor specifically designed for creating Nothing Phone 3 Glyph Matrix animations
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-blue?style=for-the-badge)](https://pauwma.github.io/GlyphMatrixPaint/)
-[![GitHub Stars](https://img.shields.io/github/stars/pauwma/GlyphMatrixPaint?style=for-the-badge)](https://github.com/pauwma/GlyphMatrixPaint)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-blue?style=for-the-badge)](https://pauwma.github.io/GlyphMatrixEditor/)
+[![GitHub Stars](https://img.shields.io/github/stars/pauwma/GlyphMatrixPaint?style=for-the-badge)](https://github.com/pauwma/GlyphMatrixEditor)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 ## 🆕 What's New
@@ -15,7 +15,7 @@
 - ⌨️ **Keyboard Shortcuts** - Speed up your workflow with intuitive hotkeys
 - 🗂️ **New Navigation Header** - New navigation tabs for improved UI organization
 
-[![Selection Feature](/img/media/select_feature.gif)](https://pauwma.github.io/GlyphMatrixPaint/)
+[![Selection Feature](/img/media/select_feature.gif)](https://pauwma.github.io/GlyphMatrixEditor/)
 
 ### Other Recent Updates
 
@@ -30,13 +30,13 @@
 
 </div>
 
-[![Eyedropper Tool](/img/media/eyedropper.gif)](https://pauwma.github.io/GlyphMatrixPaint/)
+[![Eyedropper Tool](/img/media/eyedropper.gif)](https://pauwma.github.io/GlyphMatrixEditor/)
 
 - 🎞️ **Animation** - Build a timeline to animate your designs 
 - 🎬 **GIF Import Support** - Transform animated GIFs directly into matrix animations
 - 📤 **GIF Export** - Export your animations as GIF files for easy sharing
 
-[![GlyphMatrixPaint Showcase](/img/media/gif_Import.gif)](https://pauwma.github.io/GlyphMatrixPaint/)
+[![GlyphMatrixPaint Showcase](/img/media/gif_Import.gif)](https://pauwma.github.io/GlyphMatrixEditor/)
 
 ## ✨ Features
 
@@ -72,7 +72,7 @@
 <div align="center">
 <br/>
 
-**[⭐ Star this project](https://github.com/pauwma/GlyphMatrixPaint)** if you find it useful!
+**[⭐ Star this project](https://github.com/pauwma/GlyphMatrixEditor)** if you find it useful!
 
 Made with ❤️ for the Nothing community
 
