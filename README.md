@@ -24,7 +24,7 @@
 
 <div align="center">
 
-<a href="https://pauwma.github.io/GlyphMatrixPaint/">
+<a href="https://pauwma.github.io/GlyphMatrixEditor/">
 <img src="img/media/restore_session.png" alt="Auto-Save Restore" width="400">
 </a>
 
